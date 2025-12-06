@@ -4,28 +4,25 @@ import {
   Calendar,
   Clock,
   MapPin,
-  Car,
   DollarSign,
   CheckCircle,
   XCircle,
   AlertCircle,
-  User,
-  Phone,
-  Mail,
   ChevronRight,
   Download,
   MessageCircle,
   Shield,
-  Star,
-  Users,
   Fuel,
+  Cpu,
+  Bike,
+  Wrench,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import Loader from "../components/Loader";
-import Title from "../components/Title";
 
 const MyBookings = () => {
-  const { currency, bookings, fetchMyBookings, user, axios } = useAppContext();
+  const { currency, allBookings, fetchAllBookings, user, axios } =
+    useAppContext();
   const [loading, setLoading] = useState(false);
   const [expandedBooking, setExpandedBooking] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
@@ -33,38 +30,38 @@ const MyBookings = () => {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      fetchMyBookings().finally(() => setLoading(false));
+      fetchAllBookings().finally(() => setLoading(false));
     }
   }, [user]);
 
   const filterOptions = [
-    { value: "all", label: "All Bookings", count: bookings?.length || 0 },
+    { value: "all", label: "All Bookings", count: allBookings?.length || 0 },
     {
       value: "confirmed",
       label: "Confirmed",
-      count: bookings?.filter((b) => b.status === "confirmed").length || 0,
+      count: allBookings?.filter((b) => b.status === "confirmed").length || 0,
     },
     {
       value: "pending",
       label: "Pending",
-      count: bookings?.filter((b) => b.status === "pending").length || 0,
+      count: allBookings?.filter((b) => b.status === "pending").length || 0,
     },
     {
       value: "completed",
       label: "Completed",
-      count: bookings?.filter((b) => b.status === "completed").length || 0,
+      count: allBookings?.filter((b) => b.status === "completed").length || 0,
     },
     {
       value: "cancelled",
       label: "Cancelled",
-      count: bookings?.filter((b) => b.status === "cancelled").length || 0,
+      count: allBookings?.filter((b) => b.status === "cancelled").length || 0,
     },
   ];
 
-  const filteredBookings = bookings
+  const filteredBookings = allBookings
     ? activeFilter === "all"
-      ? bookings
-      : bookings.filter((booking) => booking.status === activeFilter)
+      ? allBookings
+      : allBookings.filter((booking) => booking.status === activeFilter)
     : [];
 
   const getStatusConfig = (status) => {
@@ -102,11 +99,32 @@ const MyBookings = () => {
     }
   };
 
-  const calculateDays = (pickupDate, returnDate) => {
-    const pickup = new Date(pickupDate);
-    const returnD = new Date(returnDate);
-    const diffTime = Math.abs(returnD - pickup);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const getPaymentStatusConfig = (status) => {
+    switch (status) {
+      case "paid":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "pending":
+        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+      case "failed":
+        return "text-red-600 bg-red-50 border-red-200";
+      case "refunded":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    switch (category.toLowerCase()) {
+      case "scooter":
+        return "🛵";
+      case "underbone":
+        return "🏍️";
+      case "big bike":
+        return "🏍️";
+      default:
+        return "🛵";
+    }
   };
 
   const handleCancelBooking = async (bookingId) => {
@@ -117,7 +135,7 @@ const MyBookings = () => {
       setLoading(true);
       const response = await axios.post(`/api/bookings/cancel/${bookingId}`);
       if (response.data.success) {
-        await fetchMyBookings();
+        await fetchAllBookings();
       }
     } catch (error) {
       console.error("Failed to cancel booking:", error);
@@ -148,9 +166,11 @@ const MyBookings = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            My Motorcycle Bookings
+          </h1>
           <p className="text-gray-600 mt-2">
-            View and manage all your car rental bookings in one place
+            View and manage all your motorcycle rental bookings in one place
           </p>
         </div>
 
@@ -163,7 +183,7 @@ const MyBookings = () => {
                   Total Bookings
                 </h3>
                 <p className="text-3xl font-bold mt-2">
-                  {bookings?.length || 0}
+                  {allBookings?.length || 0}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -177,8 +197,8 @@ const MyBookings = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Active</h3>
                 <p className="text-3xl font-bold mt-2">
-                  {bookings?.filter((b) => b.status === "confirmed").length ||
-                    0}
+                  {allBookings?.filter((b) => b.status === "confirmed")
+                    .length || 0}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -194,7 +214,8 @@ const MyBookings = () => {
                   Upcoming
                 </h3>
                 <p className="text-3xl font-bold mt-2">
-                  {bookings?.filter((b) => b.status === "pending").length || 0}
+                  {allBookings?.filter((b) => b.status === "pending").length ||
+                    0}
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg">
@@ -211,9 +232,9 @@ const MyBookings = () => {
                 </h3>
                 <p className="text-3xl font-bold mt-2">
                   {currency}
-                  {bookings
+                  {allBookings
                     ?.filter((b) => b.status !== "cancelled")
-                    .reduce((sum, booking) => sum + booking.price, 0)
+                    .reduce((sum, booking) => sum + booking.totalPrice, 0)
                     .toLocaleString()}
                 </p>
               </div>
@@ -255,25 +276,22 @@ const MyBookings = () => {
         {/* Bookings List */}
         {filteredBookings.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="text-gray-400 text-6xl mb-4">🚗</div>
+            <div className="text-6xl mb-4">🏍️</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               No bookings found
             </h3>
             <p className="text-gray-600 max-w-md mx-auto">
               {activeFilter !== "all"
                 ? `You don't have any ${activeFilter} bookings.`
-                : "You haven't made any bookings yet. Start by browsing available cars!"}
+                : "You haven't made any bookings yet. Start by browsing available motorcycles!"}
             </p>
           </div>
         ) : (
           <div className="space-y-6">
             {filteredBookings.map((booking, index) => {
               const statusConfig = getStatusConfig(booking.status);
-              const days = calculateDays(
-                booking.pickupDate,
-                booking.returnDate
-              );
               const isExpanded = expandedBooking === booking._id;
+              const categoryIcon = getCategoryIcon(booking.motor?.category);
 
               return (
                 <motion.div
@@ -287,15 +305,20 @@ const MyBookings = () => {
                   <div className="p-6">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-start gap-4">
-                        <img
-                          src={booking.car.image}
-                          alt={`${booking.car.brand} ${booking.car.model}`}
-                          className="w-24 h-24 rounded-xl object-cover border border-gray-200"
-                        />
+                        <div className="relative">
+                          <img
+                            src={booking.motor?.image}
+                            alt={`${booking.motor?.brand} ${booking.motor?.model}`}
+                            className="w-24 h-24 rounded-xl object-cover border border-gray-200"
+                          />
+                          <div className="absolute -top-2 -right-2 text-2xl">
+                            {categoryIcon}
+                          </div>
+                        </div>
                         <div>
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-xl font-bold text-gray-900">
-                              {booking.car.brand} {booking.car.model}
+                              {booking.motor?.brand} {booking.motor?.model}
                             </h3>
                             <span
                               className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color}`}
@@ -303,19 +326,30 @@ const MyBookings = () => {
                               {statusConfig.icon}
                               {statusConfig.label}
                             </span>
+                            <span
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPaymentStatusConfig(
+                                booking.paymentStatus
+                              )}`}
+                            >
+                              {booking.paymentStatus?.toUpperCase()}
+                            </span>
                           </div>
                           <p className="text-gray-600 mb-1">
-                            {booking.car.year} • {booking.car.category} •{" "}
-                            {booking.car.transmission}
+                            {booking.motor?.year} • {booking.motor?.category} •{" "}
+                            {booking.motor?.transmission}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              <span>{booking.car.seating_capacity} seats</span>
+                              <Cpu className="w-4 h-4" />
+                              <span>{booking.motor?.engine_cc}cc</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <Fuel className="w-4 h-4" />
-                              <span>{booking.car.fuel_type}</span>
+                              <span>{booking.motor?.fuel_type}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Bike className="w-4 h-4" />
+                              <span>{booking.rentalDays} days</span>
                             </div>
                           </div>
                         </div>
@@ -324,11 +358,12 @@ const MyBookings = () => {
                       <div className="text-right">
                         <div className="text-2xl font-bold text-gray-900">
                           {currency}
-                          {booking.price.toLocaleString()}
+                          {booking.totalPrice?.toLocaleString()}
                         </div>
                         <p className="text-sm text-gray-500">
                           {currency}
-                          {booking.car.pricePerDay} × {days} days
+                          {booking.motor?.pricePerDay} × {booking.rentalDays}{" "}
+                          days
                         </p>
                       </div>
                     </div>
@@ -364,8 +399,12 @@ const MyBookings = () => {
                           <MapPin className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-sm text-gray-500">Location</p>
-                          <p className="font-medium">{booking.car.location}</p>
+                          <p className="text-sm text-gray-500">
+                            Pick-up Location
+                          </p>
+                          <p className="font-medium">
+                            {booking.pickupLocation}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -396,10 +435,10 @@ const MyBookings = () => {
                     >
                       <div className="p-6">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                          {/* Car Details */}
+                          {/* Motor Details */}
                           <div>
                             <h4 className="text-lg font-semibold text-gray-900 mb-4">
-                              Car Details
+                              Motorcycle Details
                             </h4>
                             <div className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
@@ -407,8 +446,19 @@ const MyBookings = () => {
                                   <p className="text-sm text-gray-500">
                                     Category
                                   </p>
+                                  <p className="font-medium flex items-center gap-2">
+                                    <span className="text-lg">
+                                      {categoryIcon}
+                                    </span>
+                                    {booking.motor?.category}
+                                  </p>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                  <p className="text-sm text-gray-500">
+                                    Engine Capacity
+                                  </p>
                                   <p className="font-medium">
-                                    {booking.car.category}
+                                    {booking.motor?.engine_cc}cc
                                   </p>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -416,7 +466,7 @@ const MyBookings = () => {
                                     Transmission
                                   </p>
                                   <p className="font-medium">
-                                    {booking.car.transmission}
+                                    {booking.motor?.transmission}
                                   </p>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -424,15 +474,7 @@ const MyBookings = () => {
                                     Fuel Type
                                   </p>
                                   <p className="font-medium">
-                                    {booking.car.fuel_type}
-                                  </p>
-                                </div>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                  <p className="text-sm text-gray-500">
-                                    Seating
-                                  </p>
-                                  <p className="font-medium">
-                                    {booking.car.seating_capacity} seats
+                                    {booking.motor?.fuel_type}
                                   </p>
                                 </div>
                               </div>
@@ -441,8 +483,8 @@ const MyBookings = () => {
                                   Description
                                 </p>
                                 <p className="font-medium mt-1">
-                                  {booking.car.description ||
-                                    "Premium rental car with all amenities included."}
+                                  {booking.motor?.description ||
+                                    "Premium rental motorcycle with all safety features included."}
                                 </p>
                               </div>
                             </div>
@@ -471,30 +513,84 @@ const MyBookings = () => {
                                 </div>
                               </div>
 
+                              {/* Selected Features */}
+                              {booking.selectedFeatures?.length > 0 && (
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                  <p className="text-sm text-gray-500 mb-2">
+                                    Additional Features
+                                  </p>
+                                  <div className="space-y-2">
+                                    {booking.selectedFeatures.map(
+                                      (feature, idx) => (
+                                        <div
+                                          key={idx}
+                                          className="flex justify-between items-center"
+                                        >
+                                          <span className="font-medium">
+                                            {feature.name} × {feature.quantity}
+                                          </span>
+                                          <span className="text-blue-600">
+                                            {currency}
+                                            {feature.price * feature.quantity}
+                                          </span>
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Price Breakdown */}
                               <div className="bg-gray-50 p-4 rounded-lg">
                                 <p className="text-sm text-gray-500 mb-2">
-                                  Rental Duration
+                                  Price Breakdown
                                 </p>
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">
-                                      {days} {days === 1 ? "Day" : "Days"}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      Total rental period
-                                    </p>
-                                  </div>
-                                  <div className="text-right">
-                                    <p className="font-medium">
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span>
+                                      Base Rental ({booking.rentalDays} days)
+                                    </span>
+                                    <span>
                                       {currency}
-                                      {booking.car.pricePerDay}/day
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                      Daily rate
-                                    </p>
+                                      {booking.motor?.pricePerDay *
+                                        booking.rentalDays}
+                                    </span>
+                                  </div>
+                                  {booking.selectedFeatures?.map(
+                                    (feature, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="flex justify-between text-sm"
+                                      >
+                                        <span>
+                                          {feature.name} × {feature.quantity}
+                                        </span>
+                                        <span>
+                                          {currency}
+                                          {feature.price * feature.quantity}
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
+                                  <div className="border-t pt-2 flex justify-between font-bold">
+                                    <span>Total</span>
+                                    <span>
+                                      {currency}
+                                      {booking.totalPrice}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Notes */}
+                              {booking.notes && (
+                                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                                  <p className="text-sm text-gray-500 mb-1">
+                                    Special Notes
+                                  </p>
+                                  <p className="font-medium">{booking.notes}</p>
+                                </div>
+                              )}
 
                               {/* Action Buttons */}
                               <div className="flex flex-wrap gap-3 pt-4">
@@ -538,7 +634,7 @@ const MyBookings = () => {
         )}
 
         {/* Help Section */}
-        {bookings && bookings.length > 0 && (
+        {allBookings && allBookings.length > 0 && (
           <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div>
@@ -547,7 +643,7 @@ const MyBookings = () => {
                 </h3>
                 <p className="text-gray-600">
                   Our support team is available 24/7 to assist you with any
-                  questions or changes to your bookings.
+                  questions or changes to your motorcycle rentals.
                 </p>
               </div>
               <div className="flex gap-3">

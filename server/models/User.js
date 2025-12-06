@@ -10,9 +10,9 @@ const userSchema = new mongoose.Schema(
     image: { type: String, default: "" },
     favorites: [
       {
-        car: {
+        motor: {
           type: ObjectId,
-          ref: "Car",
+          ref: "Motor",
         },
       },
     ],
