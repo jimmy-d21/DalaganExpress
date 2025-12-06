@@ -1,5 +1,19 @@
 import fs from "fs";
-import Motor from "../models/motorModel.js"; // <-- update the import
+import Motor from "../models/Motor.js";
+
+// API to Change Role of User
+export const changeRoleToOwner = async (req, res) => {
+  try {
+    const id = req.user._id;
+    await User.findByIdAndUpdate(id, {
+      role: "owner",
+    });
+    res.json({ success: true, message: "Now you can list cars" });
+  } catch (error) {
+    console.log("Error in changeRoleToOwner controller");
+    res.json({ success: false, message: error.message });
+  }
+};
 
 // API to Add Motor
 export const addMotor = async (req, res) => {
