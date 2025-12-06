@@ -188,3 +188,90 @@ export const getOwnerBookings = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to change booking status
+export const changeBookingStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { bookingId, status } = req.body;
+
+    // Validate input
+    if (!bookingId || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking ID and status are required",
+      });
+    }
+
+    // Find the booking and populate car details
+    const booking = await Booking.findById(bookingId).populate("motor");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    // Check authorization - only owner can change status
+    if (booking.owner.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized: Only motor owner can change booking status",
+      });
+    }
+
+    // Validate status
+    const validStatuses = ["pending", "confirmed", "cancelled", "completed"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    // Update motor availability based on status
+    const motor = await Motor.findById(booking.motor._id);
+
+    if (!motor) {
+      return res.status(404).json({
+        success: false,
+        message: "Motor not found",
+      });
+    }
+
+    // Update car availability
+    if (status === "cancelled" || status === "completed") {
+      motor.isAvailable = true;
+    } else if (status === "confirmed") {
+      motor.isAvailable = false;
+    }
+    // Note: "pending" status doesn't change car availability
+
+    // Save car availability changes
+    await motor.save();
+
+    // Update booking status
+    booking.status = status;
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: "Booking status updated successfully",
+      booking: {
+        id: booking._id,
+        status: booking.status,
+        motor: {
+          id: motor._id,
+          isAvaliable: motor.isAvailable,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error in changeBookingStatus controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
