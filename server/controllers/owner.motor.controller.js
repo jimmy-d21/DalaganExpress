@@ -93,3 +93,28 @@ export const toggleMotorAvailability = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to Delete a Motor
+export const deleteMotor = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const { motorId } = req.body;
+
+    const motor = await Motor.findById(motorId);
+
+    // Checking is car belongs to the user
+    if (motor.owner.toString() !== id.toString()) {
+      return res.json({ success: false, message: "Unauthorized" });
+    }
+
+    motor.owner = null; // removed the owner for cardata
+    motor.isAvailable = false; // it will not available it can't delete this data because if someone book this car it will display in booking history just remove the owner from this car
+
+    await motor.save();
+
+    res.json({ success: true, message: "Car Removed" });
+  } catch (error) {
+    console.log("Error in deleteCar controller");
+    res.json({ success: false, message: error.message });
+  }
+};
