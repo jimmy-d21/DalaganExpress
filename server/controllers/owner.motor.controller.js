@@ -72,7 +72,7 @@ export const getOwnerMotors = async (req, res) => {
 };
 
 // API to Toggle Motor Availability
-export const toggleCarAvailability = async (req, res) => {
+export const toggleMotorAvailability = async (req, res) => {
   try {
     const id = req.user._id;
     const { motorId } = req.body;
