@@ -169,3 +169,22 @@ export const getUserBookings = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to get Owner Bookings
+export const getOwnerBookings = async (req, res) => {
+  try {
+    if (req.user.role !== "owner") {
+      return res.json({ success: false, message: "UnAuthorized" });
+    }
+    const id = req.user._id;
+
+    const bookings = await Booking.find({ owner: id })
+      .populate("motor user")
+      .select("-user.password")
+      .sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
+  } catch (error) {
+    console.log("Error in getOwnerBookings controller");
+    res.json({ success: false, message: error.message });
+  }
+};
