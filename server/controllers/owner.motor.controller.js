@@ -57,3 +57,16 @@ export const addMotor = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to List Owner Motor
+export const getOwnerMotors = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const motors = await Motor.find({ owner: id });
+
+    res.json({ success: true, motors });
+  } catch (error) {
+    console.log("Error in getOwnerCars controller");
+    res.json({ success: false, message: error.message });
+  }
+};
