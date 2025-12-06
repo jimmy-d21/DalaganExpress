@@ -4,12 +4,13 @@ import FeaturedSection from "../components/FeaturedSection";
 import Banner from "../components/Banner";
 import Testimonial from "../components/Testimonial";
 import NewsLetter from "../components/NewsLetter";
+import FeaturedMotorSection from "../components/FeaturedMotorSection";
 
 const Home = () => {
   return (
     <div className="bg-gray-50">
       <Hero />
-      <FeaturedSection />
+      <FeaturedMotorSection />
       <Banner />
       <Testimonial />
       <NewsLetter />

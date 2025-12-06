@@ -75,10 +75,19 @@ export const getUserData = async (req, res) => {
 
 export const getAllMotors = async (req, res) => {
   try {
-    const motor = await Motor.find({ isAvaliable: true });
-    res.json({ success: true, motor });
+    const motors = await Motor.find({ isAvailable: true }).sort({
+      createdAt: -1,
+    });
+
+    res.json({
+      success: true,
+      motors,
+    });
   } catch (error) {
-    console.log("Error in getAllMotors controller");
-    res.json({ success: false, message: error.message });
+    console.error("Error in getAllMotors controller:", error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
   }
 };

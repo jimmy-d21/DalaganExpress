@@ -18,6 +18,7 @@ import AboutUs from "./pages/AboutUs";
 import Contact from "./pages/Contact ";
 import Careers from "./pages/Careers";
 import Favorite from "./pages/Favorite";
+import AddMotor from "./pages/owner/AddMotor";
 
 const App = () => {
   const { showLogin } = useAppContext();
@@ -40,6 +41,7 @@ const App = () => {
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="add-car" element={<AddCar />} />
+          <Route path="add-motor" element={<AddMotor />} />
           <Route path="manage-cars" element={<ManageCars />} />
           <Route path="manage-bookings" element={<ManageBookings />} />
         </Route>

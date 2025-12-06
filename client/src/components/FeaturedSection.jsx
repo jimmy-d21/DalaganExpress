@@ -7,7 +7,7 @@ import { ChevronRight, Flame, Bike, Zap, Shield } from "lucide-react";
 import CarCard from "./CarCard";
 
 const FeaturedSection = () => {
-  const { navigate, bikes, cars } = useAppContext();
+  const { navigate, cars } = useAppContext();
 
   return (
     <section className="relative py-24 px-4 md:px-8 lg:px-16 bg-gradient-to-b from-white to-orange-50/30 overflow-hidden">
@@ -119,7 +119,7 @@ const FeaturedSection = () => {
             <ChevronRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
           </button>
           <p className="mt-4 text-sm text-gray-500">
-            {bikes?.length || 0}+ premium motorcycles available
+            {cars?.length || 0}+ premium motorcycles available
           </p>
         </motion.div>
       </div>

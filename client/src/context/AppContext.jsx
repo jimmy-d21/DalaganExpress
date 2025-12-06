@@ -24,6 +24,8 @@ const AppProvider = ({ children }) => {
   const [bookings, setBookings] = useState([]);
 
   // Motors Related
+  const [motors, setMotors] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
 
   // Function to check user is logged in
   const fetchUser = async () => {
@@ -34,6 +36,30 @@ const AppProvider = ({ children }) => {
         setIsOwner(data.user.role === "owner");
       } else {
         navigate("/");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // Function to fecth to all motors from server
+  const fetchMotors = async () => {
+    try {
+      const { data } = await axios.get("/api/motor/user/motors");
+
+      if (data.success) {
+        setMotors(data.motors);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    }
+  };
+
+  const fetchAllBookings = async () => {
+    try {
+      const { data } = await axios.get("/api/motor/bookings/user");
+      if (data.success) {
+        setAllBookings(data.bookings);
       }
     } catch (error) {
       toast.error(error.message);
@@ -79,6 +105,7 @@ const AppProvider = ({ children }) => {
     const token = localStorage.getItem("token");
     setToken(token);
     fecthCars();
+    fetchMotors();
   }, []);
 
   // useEffect to fetch user data when token is available
@@ -112,6 +139,12 @@ const AppProvider = ({ children }) => {
     setReturnDate,
     fetchMyBookings,
     bookings,
+
+    // Motor Related
+    motors,
+    fetchMotors,
+    allBookings,
+    fetchAllBookings,
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

@@ -14,7 +14,7 @@ import {
 const ownerMotorRouter = express.Router();
 
 ownerMotorRouter.post("/change-role", protect, changeRoleToOwner);
-ownerMotorRouter.post("/add-car", upload.single("image"), protect, addMotor);
+ownerMotorRouter.post("/add-motor", upload.single("image"), protect, addMotor);
 ownerMotorRouter.get("/cars", protect, getOwnerMotors);
 ownerMotorRouter.post("/toggle-car", protect, toggleMotorAvailability);
 ownerMotorRouter.post("/delete-car", protect, deleteMotor);

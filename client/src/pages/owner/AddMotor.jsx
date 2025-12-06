@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Upload,
-  Car,
+  Bike,
   Calendar,
   DollarSign,
-  Users,
   MapPin,
   Fuel,
   Settings,
@@ -15,105 +14,186 @@ import {
   XCircle,
   Sparkles,
   Navigation,
+  Gauge,
+  Shield,
+  Zap,
+  Wind,
+  Disc,
+  User,
 } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 
-const AddCar = () => {
-  const { axios, currency, fecthCars, fetchMotors } = useAppContext();
-
+const AddMotor = () => {
+  const { axios, currency, fetchMotors, motors } = useAppContext();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isLoading, setLoading] = useState(false);
   const [formStep, setFormStep] = useState(1);
-  const [car, setCar] = useState({
+  const [motor, setMotor] = useState({
     brand: "",
     model: "",
     year: new Date().getFullYear(),
+    engine_cc: "",
     pricePerDay: "",
     category: "",
     transmission: "",
     fuel_type: "",
-    seating_capacity: "",
     location: "",
     description: "",
   });
 
+  console.log(`Motors: ${motors}`);
+
+  // Motorcycle Categories
   const categories = [
-    { value: "Sedan", label: "Sedan", icon: "🚗" },
-    { value: "SUV", label: "SUV", icon: "🚙" },
-    { value: "Van", label: "Van", icon: "🚐" },
-    { value: "Convertible", label: "Convertible", icon: "🏎️" },
-    { value: "Coupe", label: "Coupe", icon: "🚓" },
-    { value: "Hatchback", label: "Hatchback", icon: "🚗" },
-    { value: "Pickup", label: "Pickup Truck", icon: "🛻" },
-    { value: "Motorcycle", label: "Motorcycle", icon: "🏍️" },
+    {
+      value: "scooter",
+      label: "Scooter",
+      icon: "🛵",
+      description: "Automatic, perfect for city rides",
+    },
+    {
+      value: "underbone",
+      label: "Underbone",
+      icon: "🏍️",
+      description: "Manual, lightweight",
+    },
+    {
+      value: "big_bike",
+      label: "Big Bike",
+      icon: "🏍️🔥",
+      description: "400cc+, adventure/touring",
+    },
+    {
+      value: "sportbike",
+      label: "Sport Bike",
+      icon: "⚡",
+      description: "High-performance, racing style",
+    },
+    {
+      value: "cruiser",
+      label: "Cruiser",
+      icon: "🛣️",
+      description: "Comfortable, long-distance",
+    },
+    {
+      value: "naked",
+      label: "Naked Bike",
+      icon: "💨",
+      description: "Standard, versatile",
+    },
+    {
+      value: "adventure",
+      label: "Adventure",
+      icon: "🗺️",
+      description: "Off-road capable",
+    },
+    {
+      value: "electric",
+      label: "Electric",
+      icon: "🔋",
+      description: "Zero emissions, quiet",
+    },
   ];
 
+  // Transmission Types for Motorcycles
   const transmissions = [
-    { value: "Automatic", label: "Automatic" },
+    { value: "Automatic", label: "Automatic (CVT)" },
     { value: "Manual", label: "Manual" },
     { value: "Semi-Automatic", label: "Semi-Automatic" },
+    { value: "DCT", label: "Dual Clutch (DCT)" },
   ];
 
+  // Fuel Types for Motorcycles
   const fuelTypes = [
-    { value: "Gas", label: "Gasoline" },
-    { value: "Diesel", label: "Diesel" },
-    { value: "Petrol", label: "Petrol" },
-    { value: "Electric", label: "Electric" },
-    { value: "Hybrid", label: "Hybrid" },
-    { value: "Plug-in Hybrid", label: "Plug-in Hybrid" },
+    { value: "Gas", label: "Gasoline", icon: "⛽" },
+    { value: "Premium", label: "Premium Gas", icon: "✨" },
+    { value: "Diesel", label: "Diesel", icon: "🛢️" },
+    { value: "Electric", label: "Electric", icon: "🔌" },
+    { value: "Hybrid", label: "Hybrid", icon: "⚡⛽" },
   ];
 
-  // Negros and Bacolod specific locations
+  // Engine CC Options
+  const engineSizes = [
+    { value: "50", label: "50cc", type: "Scooter" },
+    { value: "110", label: "110cc", type: "Entry Level" },
+    { value: "125", label: "125cc", type: "Standard" },
+    { value: "150", label: "150cc", type: "Popular" },
+    { value: "200", label: "200cc", type: "Mid-range" },
+    { value: "250", label: "250cc", type: "Beginner Big Bike" },
+    { value: "400", label: "400cc", type: "Big Bike" },
+    { value: "600", label: "600cc", type: "Super Sport" },
+    { value: "750", label: "750cc+", type: "Heavy Duty" },
+  ];
+
+  // Negros Island Motorcycle-specific locations
   const negrosLocations = [
     {
-      value: "Bacolod City",
-      label: "Bacolod City",
+      value: "Bacolod City Downtown",
+      label: "Bacolod City Downtown",
       region: "Negros Occidental",
     },
-    { value: "Silay City", label: "Silay City", region: "Negros Occidental" },
     {
-      value: "Talisay City",
-      label: "Talisay City",
+      value: "Lacson Street, Bacolod",
+      label: "Lacson Street, Bacolod",
       region: "Negros Occidental",
     },
-    { value: "Bago City", label: "Bago City", region: "Negros Occidental" },
     {
-      value: "Dumaguete City",
-      label: "Dumaguete City",
+      value: "Silay Heritage Area",
+      label: "Silay Heritage Area",
+      region: "Negros Occidental",
+    },
+    {
+      value: "Talisay Beachfront",
+      label: "Talisay Beachfront",
+      region: "Negros Occidental",
+    },
+    {
+      value: "Dumaguete Rizal Boulevard",
+      label: "Dumaguete Rizal Boulevard",
       region: "Negros Oriental",
     },
     {
-      value: "Kabankalan City",
-      label: "Kabankalan City",
+      value: "Silliman University Area",
+      label: "Silliman University Area",
+      region: "Negros Oriental",
+    },
+    {
+      value: "Bago City Plaza",
+      label: "Bago City Plaza",
       region: "Negros Occidental",
     },
     {
-      value: "San Carlos City",
-      label: "San Carlos City",
+      value: "Kabankalan City Center",
+      label: "Kabankalan City Center",
       region: "Negros Occidental",
     },
     {
-      value: "Victorias City",
-      label: "Victorias City",
+      value: "Mambukal Resort Area",
+      label: "Mambukal Resort Area",
       region: "Negros Occidental",
     },
-    { value: "Cadiz City", label: "Cadiz City", region: "Negros Occidental" },
     {
-      value: "Sipalay City",
-      label: "Sipalay City",
+      value: "The Ruins Area",
+      label: "The Ruins Area",
       region: "Negros Occidental",
     },
-    { value: "Hinigaran", label: "Hinigaran", region: "Negros Occidental" },
-    { value: "Valladolid", label: "Valladolid", region: "Negros Occidental" },
-    { value: "Pulupandan", label: "Pulupandan", region: "Negros Occidental" },
+    {
+      value: "Punta Taytay, Bacolod",
+      label: "Punta Taytay, Bacolod",
+      region: "Negros Occidental",
+    },
     { value: "Other Negros Location", label: "Other Location in Negros" },
   ];
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
       setImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -125,16 +205,19 @@ const AddCar = () => {
 
   const handleNextStep = () => {
     // Validate current step
-    if (formStep === 1 && (!car.brand || !car.model || !car.year || !image)) {
+    if (
+      formStep === 1 &&
+      (!motor.brand || !motor.model || !motor.year || !image)
+    ) {
       toast.error("Please fill in all required fields in Step 1");
       return;
     }
     if (
       formStep === 2 &&
-      (!car.category ||
-        !car.transmission ||
-        !car.fuel_type ||
-        !car.seating_capacity)
+      (!motor.engine_cc ||
+        !motor.category ||
+        !motor.transmission ||
+        !motor.fuel_type)
     ) {
       toast.error("Please fill in all required fields in Step 2");
       return;
@@ -151,7 +234,7 @@ const AddCar = () => {
     if (isLoading) return;
 
     if (!image) {
-      toast.error("Please upload a car image");
+      toast.error("Please upload a motorcycle image");
       return;
     }
 
@@ -159,19 +242,16 @@ const AddCar = () => {
     try {
       const formData = new FormData();
       formData.append("image", image);
-      formData.append("carData", JSON.stringify(car));
+      formData.append("motorData", JSON.stringify(motor));
 
-      const { data } = await axios.post("/api/owner/add-car", formData);
+      const { data } = await axios.post("/api/motor/owner/add-motor", formData);
 
       if (data.success) {
-        toast.success("🎉 Car listed successfully!");
+        toast.success("🏍️ Motorcycle listed successfully!");
         resetForm();
-        fecthCars();
+        fetchMotors();
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to add car. Please try again."
-      );
     } finally {
       setLoading(false);
     }
@@ -181,15 +261,15 @@ const AddCar = () => {
     setImage(null);
     setImagePreview(null);
     setFormStep(1);
-    setCar({
+    setMotor({
       brand: "",
       model: "",
       year: new Date().getFullYear(),
+      engine_cc: "",
       pricePerDay: "",
       category: "",
       transmission: "",
       fuel_type: "",
-      seating_capacity: "",
       location: "",
       description: "",
     });
@@ -202,28 +282,28 @@ const AddCar = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-6"
     >
-      {/* Header with Negros theme */}
+      {/* Header with Motorcycle theme */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg">
-                <Car className="w-6 h-6 text-white" />
+              <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg">
+                <Bike className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  Add New Car
+                  Add New Motorcycle
                 </h1>
                 <p className="text-gray-600 text-sm mt-1">
-                  🏝️ List your car for rent in beautiful Negros Island
+                  🏝️ List your motorcycle for rent in beautiful Negros Island
                 </p>
               </div>
             </div>
             <p className="text-gray-600 max-w-2xl">
-              Fill in details to list a new car for booking, including pricing,
-              availability, and car specifications.
-              <span className="text-blue-600 font-medium ml-2">
-                Serving all of Negros Island!
+              Fill in details to list a new motorcycle for booking. Perfect for
+              tourists wanting to explore Negros Island!
+              <span className="text-orange-600 font-medium ml-2">
+                Ride through Negros in style!
               </span>
             </p>
           </div>
@@ -238,7 +318,7 @@ const AddCar = () => {
               <div
                 className={`flex items-center justify-center w-10 h-10 rounded-full border-2 font-medium transition-all duration-300 ${
                   formStep >= step
-                    ? "bg-gradient-to-r from-blue-500 to-green-500 border-transparent text-white"
+                    ? "bg-gradient-to-r from-red-500 to-orange-500 border-transparent text-white"
                     : "border-gray-300 text-gray-400"
                 }`}
               >
@@ -248,7 +328,7 @@ const AddCar = () => {
                 <div
                   className={`w-24 h-1 transition-all duration-300 ${
                     formStep > step
-                      ? "bg-gradient-to-r from-blue-500 to-green-500"
+                      ? "bg-gradient-to-r from-red-500 to-orange-500"
                       : "bg-gray-300"
                   }`}
                 ></div>
@@ -257,13 +337,13 @@ const AddCar = () => {
           ))}
         </div>
         <div className="flex justify-between text-sm text-gray-600">
-          <span className={formStep === 1 ? "text-blue-600 font-medium" : ""}>
+          <span className={formStep === 1 ? "text-red-600 font-medium" : ""}>
             Basic Info
           </span>
-          <span className={formStep === 2 ? "text-blue-600 font-medium" : ""}>
+          <span className={formStep === 2 ? "text-red-600 font-medium" : ""}>
             Specifications
           </span>
-          <span className={formStep === 3 ? "text-blue-600 font-medium" : ""}>
+          <span className={formStep === 3 ? "text-red-600 font-medium" : ""}>
             Location & Details
           </span>
         </div>
@@ -284,24 +364,26 @@ const AddCar = () => {
                 <h2 className="text-xl font-bold text-gray-900 mb-2">
                   Basic Information
                 </h2>
-                <p className="text-gray-600">Tell us about your car</p>
+                <p className="text-gray-600">Tell us about your motorcycle</p>
               </div>
 
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Car Photos <span className="text-red-500">*</span>
+                  Motorcycle Photos <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div
-                    onClick={() => document.getElementById("car-image").click()}
+                    onClick={() =>
+                      document.getElementById("motor-image").click()
+                    }
                     className="relative group cursor-pointer"
                   >
                     <div
                       className={`aspect-video rounded-xl border-2 border-dashed flex flex-col items-center justify-center transition-all duration-300 ${
                         imagePreview
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 hover:border-red-400 hover:bg-red-50"
                       }`}
                     >
                       {imagePreview ? (
@@ -319,7 +401,7 @@ const AddCar = () => {
                         <>
                           <Upload className="w-12 h-12 text-gray-400 mb-3" />
                           <p className="text-gray-600 font-medium">
-                            Upload Car Photo
+                            Upload Motorcycle Photo
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
                             Click or drag & drop
@@ -332,7 +414,7 @@ const AddCar = () => {
                     </div>
                     <input
                       type="file"
-                      id="car-image"
+                      id="motor-image"
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
@@ -340,14 +422,15 @@ const AddCar = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
-                      <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border border-red-100">
+                      <Sparkles className="w-5 h-5 text-red-600 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Photo Tips for Negros
+                          Photo Tips for Motorcycles
                         </p>
                         <p className="text-xs text-gray-600">
-                          Show your car with beautiful Negros backgrounds!
+                          Show your motorcycle with beautiful Negros
+                          backgrounds!
                         </p>
                       </div>
                     </div>
@@ -355,10 +438,10 @@ const AddCar = () => {
                       <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Best Practices
+                          Best Angles for Motorcycles
                         </p>
                         <p className="text-xs text-gray-600">
-                          Include interior, exterior, and dashboard shots
+                          Include side view, front, and engine close-ups
                         </p>
                       </div>
                     </div>
@@ -373,15 +456,15 @@ const AddCar = () => {
                     Brand <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <Car className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Bike className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="e.g., Toyota, Mitsubishi, Honda..."
-                      value={car.brand}
+                      placeholder="e.g., Honda, Yamaha, Kawasaki..."
+                      value={motor.brand}
                       onChange={(e) =>
-                        setCar({ ...car, brand: e.target.value })
+                        setMotor({ ...motor, brand: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
@@ -394,12 +477,12 @@ const AddCar = () => {
                     <Type className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="e.g., Fortuner, Montero, Vios..."
-                      value={car.model}
+                      placeholder="e.g., Aerox 155, Click 125, NMAX..."
+                      value={motor.model}
                       onChange={(e) =>
-                        setCar({ ...car, model: e.target.value })
+                        setMotor({ ...motor, model: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
@@ -419,9 +502,11 @@ const AddCar = () => {
                       placeholder="2025"
                       min="2000"
                       max={new Date().getFullYear() + 1}
-                      value={car.year}
-                      onChange={(e) => setCar({ ...car, year: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      value={motor.year}
+                      onChange={(e) =>
+                        setMotor({ ...motor, year: e.target.value })
+                      }
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
@@ -435,13 +520,13 @@ const AddCar = () => {
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="number"
-                      placeholder="1000"
+                      placeholder="300"
                       min="1"
-                      value={car.pricePerDay}
+                      value={motor.pricePerDay}
                       onChange={(e) =>
-                        setCar({ ...car, pricePerDay: e.target.value })
+                        setMotor({ ...motor, pricePerDay: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       required
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
@@ -461,11 +546,40 @@ const AddCar = () => {
                   Specifications
                 </h2>
                 <p className="text-gray-600">
-                  Define your car's features and capabilities
+                  Define your motorcycle's features and capabilities
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Engine CC */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Engine Size (cc) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {engineSizes.map((size) => (
+                      <button
+                        key={size.value}
+                        type="button"
+                        onClick={() =>
+                          setMotor({ ...motor, engine_cc: size.value })
+                        }
+                        className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                          motor.engine_cc === size.value
+                            ? "border-red-500 bg-red-50 text-red-700"
+                            : "border-gray-200 hover:border-gray-300 text-gray-700"
+                        }`}
+                      >
+                        <Gauge className="w-5 h-5 mb-1" />
+                        <span className="font-bold text-lg">{size.label}</span>
+                        <span className="text-xs text-gray-500">
+                          {size.type}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Category */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -476,15 +590,22 @@ const AddCar = () => {
                       <button
                         key={cat.value}
                         type="button"
-                        onClick={() => setCar({ ...car, category: cat.value })}
-                        className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                          car.category === cat.value
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                        onClick={() =>
+                          setMotor({ ...motor, category: cat.value })
+                        }
+                        className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                          motor.category === cat.value
+                            ? "border-red-500 bg-red-50 text-red-700"
                             : "border-gray-200 hover:border-gray-300 text-gray-700"
                         }`}
                       >
-                        <span className="text-lg">{cat.icon}</span>
-                        <span className="font-medium text-sm">{cat.label}</span>
+                        <span className="text-2xl mb-1">{cat.icon}</span>
+                        <span className="font-medium text-sm text-center">
+                          {cat.label}
+                        </span>
+                        <span className="text-xs text-gray-500 text-center mt-1">
+                          {cat.description}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -501,16 +622,23 @@ const AddCar = () => {
                         key={trans.value}
                         type="button"
                         onClick={() =>
-                          setCar({ ...car, transmission: trans.value })
+                          setMotor({ ...motor, transmission: trans.value })
                         }
                         className={`flex items-center justify-between w-full p-3 rounded-lg border transition-all ${
-                          car.transmission === trans.value
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                          motor.transmission === trans.value
+                            ? "border-red-500 bg-red-50 text-red-700"
                             : "border-gray-200 hover:border-gray-300 text-gray-700"
                         }`}
                       >
-                        <span className="font-medium">{trans.label}</span>
-                        <Settings className="w-4 h-4" />
+                        <div className="flex items-center gap-3">
+                          <Settings className="w-4 h-4" />
+                          <span className="font-medium">{trans.label}</span>
+                        </div>
+                        {trans.value === "Automatic" && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Popular
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -527,45 +655,23 @@ const AddCar = () => {
                         key={fuel.value}
                         type="button"
                         onClick={() =>
-                          setCar({ ...car, fuel_type: fuel.value })
+                          setMotor({ ...motor, fuel_type: fuel.value })
                         }
-                        className={`flex items-center gap-2 p-3 rounded-lg border transition-all ${
-                          car.fuel_type === fuel.value
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                          motor.fuel_type === fuel.value
+                            ? "border-red-500 bg-red-50 text-red-700"
                             : "border-gray-200 hover:border-gray-300 text-gray-700"
                         }`}
                       >
-                        <Fuel className="w-4 h-4" />
-                        <span className="font-medium text-sm">
-                          {fuel.label}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{fuel.icon}</span>
+                          <span className="font-medium text-sm">
+                            {fuel.label}
+                          </span>
+                        </div>
+                        <Fuel className="w-4 h-4 text-gray-400" />
                       </button>
                     ))}
-                  </div>
-                </div>
-
-                {/* Seating Capacity */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Seating Capacity <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="number"
-                      placeholder="4"
-                      min="1"
-                      max="12"
-                      value={car.seating_capacity}
-                      onChange={(e) =>
-                        setCar({ ...car, seating_capacity: e.target.value })
-                      }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      required
-                    />
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                      seats
-                    </div>
                   </div>
                 </div>
               </div>
@@ -580,14 +686,14 @@ const AddCar = () => {
                   Location & Details
                 </h2>
                 <p className="text-gray-600">
-                  Specify your car's location in Negros Island
+                  Specify your motorcycle's location in Negros Island
                 </p>
               </div>
 
               {/* Location - Negros Specific */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Location in Negros Island{" "}
+                  Pickup Location in Negros Island{" "}
                   <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-3">
@@ -595,20 +701,20 @@ const AddCar = () => {
                     <Navigation className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="e.g., Lacson Street, Bacolod City"
-                      value={car.location}
+                      placeholder="e.g., Near SM City Bacolod, Lacson Street"
+                      value={motor.location}
                       onChange={(e) =>
-                        setCar({ ...car, location: e.target.value })
+                        setMotor({ ...motor, location: e.target.value })
                       }
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       required
                     />
                   </div>
 
-                  {/* Popular Negros Locations */}
+                  {/* Popular Negros Motorcycle Locations */}
                   <div>
                     <p className="text-sm text-gray-600 mb-2">
-                      Popular locations in Negros:
+                      Popular motorcycle pickup locations in Negros:
                     </p>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {negrosLocations.slice(0, 8).map((loc) => (
@@ -616,11 +722,11 @@ const AddCar = () => {
                           key={loc.value}
                           type="button"
                           onClick={() =>
-                            setCar({ ...car, location: loc.value })
+                            setMotor({ ...motor, location: loc.value })
                           }
                           className={`flex flex-col items-center p-2 rounded-lg border transition-all text-center ${
-                            car.location === loc.value
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
+                            motor.location === loc.value
+                              ? "border-red-500 bg-red-50 text-red-700"
                               : "border-gray-200 hover:border-gray-300 text-gray-700"
                           }`}
                         >
@@ -640,11 +746,11 @@ const AddCar = () => {
                     {/* More locations dropdown */}
                     <div className="mt-3">
                       <select
-                        value={car.location}
+                        value={motor.location}
                         onChange={(e) =>
-                          setCar({ ...car, location: e.target.value })
+                          setMotor({ ...motor, location: e.target.value })
                         }
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                       >
                         <option value="">
                           Or select from all Negros locations...
@@ -669,27 +775,28 @@ const AddCar = () => {
                   <FileText className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                   <textarea
                     rows={6}
-                    placeholder="Describe your car's features, condition, and any special amenities. Include details about:
-                    • Perfect for exploring Negros tourist spots
-                    • Ideal for trips to Mambukal, The Ruins, or beaches
-                    • Suitable for Negros mountain roads
-                    • Any special features for island travel"
-                    value={car.description}
+                    placeholder="Describe your motorcycle's features, condition, and any special accessories. Include details about:
+                    • Perfect for exploring Negros tourist spots (Mambukal, beaches)
+                    • Suitable for mountain roads and coastal highways
+                    • Safety equipment included (helmet, etc.)
+                    • Fuel efficiency and riding comfort
+                    • Any custom modifications or special features"
+                    value={motor.description}
                     onChange={(e) =>
-                      setCar({ ...car, description: e.target.value })
+                      setMotor({ ...motor, description: e.target.value })
                     }
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
                     required
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Tip: Mention if your car is suitable for Negros roads and
-                  tourist destinations.
+                  Tip: Mention if your motorcycle is suitable for Negros roads
+                  and tourist destinations.
                 </p>
               </div>
 
-              {/* Preview Card with Negros theme */}
-              <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-6 border border-blue-200">
+              {/* Preview Card with Motorcycle theme */}
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 border border-red-200">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">
                   Listing Preview
                 </h3>
@@ -705,29 +812,29 @@ const AddCar = () => {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold text-gray-900 mb-2">
-                      {car.brand || "Brand"} {car.model || "Model"}
+                      {motor.brand || "Brand"} {motor.model || "Model"}
                     </h4>
                     <div className="space-y-2">
-                      <p className="text-gray-600">{car.year || "Year"}</p>
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-gray-600">{motor.year || "Year"}</p>
+                      <p className="text-2xl font-bold text-red-600">
                         {currency}
-                        {car.pricePerDay || "0"}/day
+                        {motor.pricePerDay || "0"}/day
                       </p>
                       <div className="flex flex-wrap gap-2">
                         <span className="px-3 py-1 bg-white/80 text-gray-700 rounded-full text-sm">
-                          {car.category || "Category"}
+                          {motor.engine_cc || "0"}cc
                         </span>
                         <span className="px-3 py-1 bg-white/80 text-gray-700 rounded-full text-sm">
-                          {car.transmission || "Transmission"}
+                          {motor.category || "Category"}
                         </span>
                         <span className="px-3 py-1 bg-white/80 text-gray-700 rounded-full text-sm">
-                          {car.seating_capacity || "4"} seats
+                          {motor.transmission || "Transmission"}
                         </span>
                       </div>
-                      {car.location && (
+                      {motor.location && (
                         <div className="flex items-center gap-2 mt-3 text-gray-700">
                           <MapPin className="w-4 h-4 text-green-600" />
-                          <span className="font-medium">{car.location}</span>
+                          <span className="font-medium">{motor.location}</span>
                           <span className="text-sm text-gray-500">
                             • Negros Island
                           </span>
@@ -758,7 +865,7 @@ const AddCar = () => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
               >
                 Next Step →
               </button>
@@ -775,17 +882,17 @@ const AddCar = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                  className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
                 >
                   {isLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Listing Your Car...</span>
+                      <span>Listing Your Motorcycle...</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      <span>List Car in Negros</span>
+                      <span>List Motorcycle in Negros</span>
                     </>
                   )}
                 </button>
@@ -795,49 +902,49 @@ const AddCar = () => {
         </motion.div>
       </form>
 
-      {/* Quick Tips for Negros */}
+      {/* Quick Tips for Motorcycle Rentals in Negros */}
       <div className="max-w-4xl mx-auto mt-8">
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-100">
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-6 border border-red-100">
           <div className="flex items-start gap-4">
-            <Sparkles className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
+            <Sparkles className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                💡 Tips for Successful Listings in Negros
+                🏍️ Tips for Successful Motorcycle Listings in Negros
               </h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                   <span>
-                    <strong>Negros-Ready:</strong> Mention if your car is
-                    suitable for Negros mountain roads and tourist destinations
+                    <strong>Safety First:</strong> Include helmet and safety
+                    gear availability
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                   <span>
-                    <strong>Island Travel:</strong> Highlight if your car is
-                    good for island hopping or long drives
+                    <strong>Negros-Ready:</strong> Mention if suitable for
+                    Negros mountain roads and coastal highways
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                   <span>
-                    <strong>Local Features:</strong> Mention AC performance
-                    (important for Negros weather)
+                    <strong>Fuel Efficiency:</strong> Highlight km/liter for
+                    Negros tourism routes
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                   <span>
-                    <strong>Price Competitively:</strong> Check similar cars in
-                    Bacolod/Dumaguete for pricing
+                    <strong>Popular Routes:</strong> Suggest routes to Mambukal,
+                    The Ruins, beaches
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                   <span>
-                    <strong>Clear Photos:</strong> Show your car with beautiful
-                    Negros backgrounds to attract tourists
+                    <strong>Weather Ready:</strong> Mention if suitable for
+                    Negros weather (rain/heat)
                   </span>
                 </li>
               </ul>
@@ -849,4 +956,4 @@ const AddCar = () => {
   );
 };
 
-export default AddCar;
+export default AddMotor;
