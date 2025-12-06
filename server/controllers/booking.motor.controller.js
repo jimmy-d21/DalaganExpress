@@ -152,3 +152,20 @@ export const createBooking = async (req, res) => {
     });
   }
 };
+
+// API to List User Bookings
+export const getUserBookings = async (req, res) => {
+  try {
+    const id = req.user._id;
+
+    const bookings = await Booking.find({
+      user: id,
+    })
+      .populate("motor")
+      .sort({ createdAt: -1 });
+    res.json({ success: true, bookings });
+  } catch (error) {
+    console.log("Error in getUserBookings controller");
+    res.json({ success: false, message: error.message });
+  }
+};
