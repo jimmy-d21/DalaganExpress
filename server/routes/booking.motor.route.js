@@ -8,12 +8,12 @@ import {
   getUserBookings,
 } from "../controllers/booking.motor.controller.js";
 
-const bookingRouter = express.Router();
+const bookingMotorRouter = express.Router();
 
-bookingRouter.post("/check-availability", checkAvailabilityOfMotor);
-bookingRouter.post("/create", protect, createBooking);
-bookingRouter.get("/user", protect, getUserBookings);
-bookingRouter.get("/owner", protect, getOwnerBookings);
-bookingRouter.post("/change-status", protect, changeBookingStatus);
+bookingMotorRouter.post("/check-availability", checkAvailabilityOfMotor);
+bookingMotorRouter.post("/create", protect, createBooking);
+bookingMotorRouter.get("/user", protect, getUserBookings);
+bookingMotorRouter.get("/owner", protect, getOwnerBookings);
+bookingMotorRouter.post("/change-status", protect, changeBookingStatus);
 
-export default bookingRouter;
+export default bookingMotorRouter;

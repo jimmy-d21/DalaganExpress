@@ -7,11 +7,11 @@ import {
   registerUser,
 } from "../controllers/user.motor.controller.js";
 
-const userRouter = express.Router();
+const userMotorRouter = express.Router();
 
-userRouter.post("/register", registerUser);
-userRouter.post("/login", loginUser);
-userRouter.get("/data", protect, getUserData);
-userRouter.get("/motors", getAllMotors);
+userMotorRouter.post("/register", registerUser);
+userMotorRouter.post("/login", loginUser);
+userMotorRouter.get("/data", protect, getUserData);
+userMotorRouter.get("/motors", getAllMotors);
 
-export default userRouter;
+export default userMotorRouter;

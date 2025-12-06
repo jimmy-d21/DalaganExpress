@@ -6,6 +6,10 @@ import userRouter from "./routes/userRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
+import userMotorRouter from "./routes/user.motor.route.js";
+import ownerMotorRouter from "./routes/owner.motor.route.js";
+import bookingMotorRouter from "./routes/booking.motor.route.js";
+
 // Initialize Express App
 const app = express();
 
@@ -24,6 +28,11 @@ app.get(`/`, (req, res) => {
 app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);
 app.use("/api/bookings", bookingRouter);
+
+// Routes
+app.use("/api/motor/user", userMotorRouter);
+app.use("/api/motor/owner", ownerMotorRouter);
+app.use("/api/motor/bookings", bookingMotorRouter);
 
 const PORT = process.env.PORT || 3000;
 
