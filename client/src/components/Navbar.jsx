@@ -52,7 +52,7 @@ const Navbar = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/bikes?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/motors?search=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery("");
       setIsOpen(false);
     }

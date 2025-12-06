@@ -90,7 +90,7 @@ export const assets = {
 
 export const menuLinks = [
   { name: "Home", path: "/" },
-  { name: "Bikes", path: "/bikes" },
+  { name: "Motors", path: "/motors" },
   { name: "About Us", path: "/about" },
   { name: "Contact", path: "/contact" },
 ];
@@ -101,12 +101,6 @@ export const ownerMenuLinks = [
     path: "/owner",
     icon: dashboardIcon,
     coloredIcon: dashboardIconColored,
-  },
-  {
-    name: "Add car",
-    path: "/owner/add-car",
-    icon: addIcon,
-    coloredIcon: addIconColored,
   },
   {
     name: "Add Motor",

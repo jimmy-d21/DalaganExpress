@@ -38,7 +38,7 @@ const Hero = () => {
     if (!pickupLocation) return;
 
     navigate(
-      `/bikes?pickupLocation=${pickupLocation}&pickupDate=${pickupDate}&returnDate=${returnDate}&bikeType=${bikeType}`
+      `/motors?pickupLocation=${pickupLocation}&pickupDate=${pickupDate}&returnDate=${returnDate}&bikeType=${bikeType}`
     );
     setSearchActive(false);
   };
