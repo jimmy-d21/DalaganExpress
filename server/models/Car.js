@@ -16,6 +16,14 @@ const carSchema = new mongoose.Schema(
     location: { type: String, required: true },
     description: { type: String, required: true },
     isAvaliable: { type: Boolean, default: true },
+    hearts: [
+      {
+        user: {
+          type: ObjectId,
+          ref: "User",
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

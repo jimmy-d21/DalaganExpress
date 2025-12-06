@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+const { ObjectId } = mongoose.Schema.Types;
 
 const userSchema = new mongoose.Schema(
   {
@@ -7,6 +8,14 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: { type: String, enum: ["owner", "user"], default: "user" },
     image: { type: String, default: "" },
+    favorites: [
+      {
+        car: {
+          type: ObjectId,
+          ref: "Car",
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
