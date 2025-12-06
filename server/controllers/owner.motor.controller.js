@@ -164,10 +164,7 @@ export const getDashboardData = async (req, res) => {
 
     // Total Earnings (completed + confirmed)
     const totalEarnings = allBookings
-      .filter(
-        (booking) =>
-          booking.status === "completed" || booking.status === "confirmed"
-      )
+      .filter((booking) => booking.status === "completed")
       .reduce((acc, booking) => acc + booking.price, 0);
 
     // Monthly Revenue (this month only)
@@ -175,7 +172,7 @@ export const getDashboardData = async (req, res) => {
       .filter((booking) => {
         const bookingDate = new Date(booking.createdAt);
         return (
-          (booking.status === "completed" || booking.status === "confirmed") &&
+          booking.status === "completed" &&
           bookingDate.getMonth() === currentMonth &&
           bookingDate.getFullYear() === currentYear
         );

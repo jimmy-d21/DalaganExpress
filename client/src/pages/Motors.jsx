@@ -12,7 +12,6 @@ import {
   Bike,
   Navigation,
   Fuel,
-  Settings,
   Users,
   Gauge,
   Sparkles,

@@ -3,21 +3,65 @@ const { ObjectId } = mongoose.Schema.Types;
 
 const bookingSchema = new mongoose.Schema(
   {
-    motor: { type: ObjectId, ref: "Motor", required: true },
-    user: { type: ObjectId, ref: "User", required: true },
-    owner: { type: ObjectId, ref: "User", required: true },
-    pickupDate: { type: Date, required: true },
-    returnDate: { type: Date, required: true },
+    motor: {
+      type: ObjectId,
+      ref: "Motor",
+      required: true,
+    },
+    user: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+    owner: {
+      type: ObjectId,
+      ref: "User",
+      required: true,
+    },
+    pickupDate: {
+      type: Date,
+      required: true,
+    },
+    returnDate: {
+      type: Date,
+      required: true,
+    },
+    pickupLocation: {
+      type: String,
+      required: true,
+      default: "main-office",
+    },
+    rentalDays: {
+      type: Number,
+      required: true,
+    },
+    selectedFeatures: [
+      {
+        name: String,
+        price: Number,
+        quantity: Number,
+      },
+    ],
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
     status: {
       type: String,
       enum: ["pending", "confirmed", "cancelled", "completed"],
       default: "pending",
     },
-    price: { type: Number, required: true },
-    noOfDays: { type: Number, required: true },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    notes: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
 
-const Booking = mongoose.model("Bookings", bookingSchema);
+const Booking = mongoose.model("Booking-Motor", bookingSchema);
 export default Booking;

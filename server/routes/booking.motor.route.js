@@ -3,6 +3,7 @@ import { protect } from "../middleware/auth.js";
 import {
   changeBookingStatus,
   checkAvailabilityOfMotor,
+  checkMotorAvailability,
   createBooking,
   getOwnerBookings,
   getUserBookings,
@@ -11,6 +12,7 @@ import {
 const bookingMotorRouter = express.Router();
 
 bookingMotorRouter.post("/check-availability", checkAvailabilityOfMotor);
+bookingMotorRouter.post("/check-motor-availability", checkMotorAvailability);
 bookingMotorRouter.post("/create", protect, createBooking);
 bookingMotorRouter.get("/user", protect, getUserBookings);
 bookingMotorRouter.get("/owner", protect, getOwnerBookings);

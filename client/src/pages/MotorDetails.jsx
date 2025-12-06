@@ -42,6 +42,7 @@ const MotorDetails = () => {
   const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [showMap, setShowMap] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
 
   const {
     motors,
@@ -52,6 +53,7 @@ const MotorDetails = () => {
     returnDate,
     setReturnDate,
     navigate,
+    user,
   } = useAppContext();
 
   // Motorcycle pickup locations in Negros
@@ -169,6 +171,19 @@ const MotorDetails = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Please login to book a motorcycle");
+      navigate("/login");
+      return;
+    }
+
+    // Check if user is trying to book their own motorcycle
+    if (user._id === motor.owner._id) {
+      toast.error("You cannot book your own motorcycle");
+      return;
+    }
+
     if (!pickupDate || !returnDate) {
       toast.error("Please select pickup and return dates");
       return;
@@ -187,35 +202,68 @@ const MotorDetails = () => {
       return;
     }
 
-    setIsLoading(true);
+    // Check availability before booking
+    setIsCheckingAvailability(true);
     try {
-      const { data } = await axios.post("/api/bookings/motorcycle/create", {
+      // Check availability for this specific motor
+      const availabilityCheck = await axios.post(
+        "/api/motor/bookings/check-motor-availability",
+        {
+          motor: id,
+          pickupDate,
+          returnDate,
+        }
+      );
+
+      if (!availabilityCheck.data.available) {
+        toast.error("Motorcycle is not available for the selected dates");
+        setIsCheckingAvailability(false);
+        return;
+      }
+
+      // Prepare selected features data
+      const featuresData = selectedFeatures.map((featureId) => {
+        const feature = features.find((f) => f.id === featureId);
+        return {
+          name: feature?.name || featureId,
+          price: feature?.price || 0,
+          quantity: 1,
+        };
+      });
+
+      // Proceed with booking
+      setIsLoading(true);
+      const { data } = await axios.post("/api/motor/bookings/create", {
         motor: id,
         pickupDate,
         returnDate,
         pickupLocation,
         rentalDays,
-        selectedFeatures,
+        selectedFeatures: featuresData,
         totalPrice: calculateTotalPrice(),
       });
 
       if (data.success) {
         toast.success("🏍️ Motorcycle booked successfully!");
+        // Reset form
         setPickupDate("");
         setReturnDate("");
         setRentalDays(1);
         setSelectedFeatures([]);
         setPickupLocation("main-office");
+        // Navigate to bookings page
         navigate("/bookings");
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Booking failed. Please try again.");
       }
     } catch (error) {
+      console.error("Booking error:", error);
       toast.error(
         error.response?.data?.message || "Booking failed. Please try again."
       );
     } finally {
       setIsLoading(false);
+      setIsCheckingAvailability(false);
     }
   };
 
@@ -250,6 +298,19 @@ const MotorDetails = () => {
     };
     return labels[category] || category;
   };
+
+  // Update rental days when dates change
+  useEffect(() => {
+    if (pickupDate && returnDate) {
+      const picked = new Date(pickupDate);
+      const returned = new Date(returnDate);
+      const timeDiff = returned - picked;
+      const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      if (days > 0) {
+        setRentalDays(days);
+      }
+    }
+  }, [pickupDate, returnDate]);
 
   useEffect(() => {
     const foundMotor = motors.find((motor) => motor._id === id);
@@ -300,7 +361,7 @@ const MotorDetails = () => {
                 <span className="text-white/60">•</span>
                 <span className="text-green-400 flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  Available Now
+                  {motor.isAvailable ? "Available Now" : "Currently Booked"}
                 </span>
               </div>
             </div>
@@ -869,13 +930,24 @@ const MotorDetails = () => {
                 {/* Book Now Button */}
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={
+                    isLoading || isCheckingAvailability || !motor.isAvailable
+                  }
                   className="w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3 group"
                 >
-                  {isLoading ? (
+                  {isLoading || isCheckingAvailability ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Starting Your Adventure...</span>
+                      <span>
+                        {isCheckingAvailability
+                          ? "Checking Availability..."
+                          : "Starting Your Adventure..."}
+                      </span>
+                    </>
+                  ) : !motor.isAvailable ? (
+                    <>
+                      <AlertCircle className="w-5 h-5" />
+                      <span>Currently Unavailable</span>
                     </>
                   ) : (
                     <>
@@ -889,6 +961,15 @@ const MotorDetails = () => {
                   <Bell className="w-4 h-4 inline mr-1" />
                   Free cancellation • 24/7 support • Verified riders only
                 </p>
+
+                {/* Login Prompt */}
+                {!user && (
+                  <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-700 text-center">
+                      Please login to book this motorcycle
+                    </p>
+                  </div>
+                )}
               </form>
             </motion.div>
 
