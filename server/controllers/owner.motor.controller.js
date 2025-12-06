@@ -70,3 +70,26 @@ export const getOwnerMotors = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// API to Toggle Motor Availability
+export const toggleCarAvailability = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const { motorId } = req.body;
+
+    const motor = await Motor.findById(motorId);
+
+    // Checking is car belongs to the user
+    if (motor.owner.toString() !== id.toString()) {
+      return res.json({ success: false, message: "Unauthorized" });
+    }
+
+    motor.isAvailable = !motor.isAvailable;
+    await motor.save();
+
+    res.json({ success: true, message: "Availability Toggled" });
+  } catch (error) {
+    console.log("Error in toggleCarAvailability controller");
+    res.json({ success: false, message: error.message });
+  }
+};
