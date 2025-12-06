@@ -1,5 +1,7 @@
 import fs from "fs";
 import Motor from "../models/Motor.js";
+import Booking from "../models/booking.motor.model.js";
+import User from "../models/User.js";
 
 // API to Change Role of User
 export const changeRoleToOwner = async (req, res) => {
@@ -116,5 +118,204 @@ export const deleteMotor = async (req, res) => {
   } catch (error) {
     console.log("Error in deleteCar controller");
     res.json({ success: false, message: error.message });
+  }
+};
+
+// API to get Dashboard Data (Motor Version)
+export const getDashboardData = async (req, res) => {
+  try {
+    const { _id, role } = req.user;
+
+    if (role !== "owner") {
+      return res.json({ success: false, message: "Unauthorized" });
+    }
+
+    // Current date
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    // Fetch all motores from owner
+    const motors = await Motor.find({ owner: _id });
+
+    // Fetch all bookings related to the owner
+    const allBookings = await Booking.find({ owner: _id })
+      .populate("motor") // <-- changed from car
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    // Booking filters
+    const pendingBookings = allBookings.filter((b) => b.status === "pending");
+    const confirmedBookings = allBookings.filter(
+      (b) => b.status === "confirmed"
+    );
+    const completedBookings = allBookings.filter(
+      (b) => b.status === "completed"
+    );
+    const cancelledBookings = allBookings.filter(
+      (b) => b.status === "cancelled"
+    );
+
+    // Active (confirmed and ongoing)
+    const activeBookings = allBookings.filter(
+      (b) => b.status === "confirmed" && new Date(b.returnDate) >= currentDate
+    );
+
+    // Total Earnings (completed + confirmed)
+    const totalEarnings = allBookings
+      .filter(
+        (booking) =>
+          booking.status === "completed" || booking.status === "confirmed"
+      )
+      .reduce((acc, booking) => acc + booking.price, 0);
+
+    // Monthly Revenue (this month only)
+    const monthlyRevenue = allBookings
+      .filter((booking) => {
+        const bookingDate = new Date(booking.createdAt);
+        return (
+          (booking.status === "completed" || booking.status === "confirmed") &&
+          bookingDate.getMonth() === currentMonth &&
+          bookingDate.getFullYear() === currentYear
+        );
+      })
+      .reduce((acc, booking) => acc + booking.price, 0);
+
+    // Last month's revenue
+    const lastMonthRevenue = allBookings
+      .filter((booking) => {
+        const bookingDate = new Date(booking.createdAt);
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const year = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+        return (
+          (booking.status === "completed" || booking.status === "confirmed") &&
+          bookingDate.getMonth() === lastMonth &&
+          bookingDate.getFullYear() === year
+        );
+      })
+      .reduce((acc, booking) => acc + booking.price, 0);
+
+    const revenueChange =
+      lastMonthRevenue > 0
+        ? (
+            ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) *
+            100
+          ).toFixed(1)
+        : monthlyRevenue > 0
+        ? 100
+        : 0;
+
+    // Popular Motors (most booked)
+    const motorBookingCounts = {};
+    allBookings.forEach((booking) => {
+      if (
+        booking.motor &&
+        (booking.status === "completed" || booking.status === "confirmed")
+      ) {
+        const motorId = booking.motor._id.toString();
+        if (!motorBookingCounts[motorId]) {
+          motorBookingCounts[motorId] = {
+            count: 0,
+            motor: booking.motor,
+          };
+        }
+        motorBookingCounts[motorId].count++;
+      }
+    });
+
+    const popularMotors = Object.values(motorBookingCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+      .map((item) => ({
+        ...item.motor.toObject(),
+        bookings: item.count,
+        rating: 4.5 + Math.random() * 0.5, // Mock rating
+      }));
+
+    // Mock average rating for dashboard
+    const averageRating = 4.7;
+
+    // Monthly Bookings (Chart: last 6 months)
+    const monthlyBookings = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+
+      const month = date.getMonth();
+      const year = date.getFullYear();
+
+      const monthBookings = allBookings.filter((booking) => {
+        const bookingDate = new Date(booking.createdAt);
+        return (
+          bookingDate.getMonth() === month && bookingDate.getFullYear() === year
+        );
+      }).length;
+
+      monthlyBookings.push({
+        month: date.toLocaleString("default", { month: "short" }),
+        bookings: monthBookings,
+      });
+    }
+
+    // Last 5 recent bookings
+    const recentBookings = allBookings.slice(0, 5).map((booking) => ({
+      ...booking.toObject(),
+      user: booking.user
+        ? {
+            name: booking.user.name,
+            email: booking.user.email,
+          }
+        : null,
+    }));
+
+    // Dashboard Response
+    const dashboardData = {
+      totalMotors: motors.length,
+      totalBookings: allBookings.length,
+      pendingBookings: pendingBookings.length,
+      completedBookings: completedBookings.length,
+      activeBookings: activeBookings.length,
+      cancelledBookings: cancelledBookings.length,
+
+      totalEarnings,
+      monthlyRevenue,
+      revenueChange: parseFloat(revenueChange),
+
+      recentBookings,
+      popularMotors,
+      averageRating,
+      monthlyBookings,
+
+      // Stats for cards
+      stats: {
+        earningsGrowth: revenueChange > 0 ? "up" : "down",
+        bookingGrowth: 12, // mock
+        customerSatisfaction: 93, // mock
+        motorUtilization:
+          Math.round((activeBookings.length / motors.length) * 100) || 0,
+      },
+    };
+
+    res.json({
+      success: true,
+      dashboardData,
+      summary: {
+        totalRevenue: `₱${totalEarnings.toLocaleString()}`,
+        monthlyGrowth: `${revenueChange}%`,
+        activeCustomers: allBookings.reduce((acc, booking) => {
+          if (booking.user && !acc.includes(booking.user._id.toString())) {
+            acc.push(booking.user._id.toString());
+          }
+          return acc;
+        }, []).length,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getDashboardData controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
   }
 };
