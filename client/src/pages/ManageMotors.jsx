@@ -22,13 +22,14 @@ import {
   Wind,
   Zap,
   AlertCircle,
+  Motorbike,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import LoadingScreen from "../components/LoadingScreen";
 
 const ManageMotors = () => {
-  const { isOwner, axios, currency, fetchMotors } = useAppContext(); // Fixed: fecthMotors → fetchMotors
+  const { isOwner, axios, currency, fetchMotors, navigate } = useAppContext(); // Fixed: fecthMotors → fetchMotors
   const [loading, setLoading] = useState(true);
   const [motors, setMotors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -158,7 +159,10 @@ const ManageMotors = () => {
               availability.
             </p>
           </div>
-          <button className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2">
+          <button
+            onClick={() => navigate("/owner/add-motor")}
+            className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" />
             Add New Motorcycle
           </button>
@@ -176,7 +180,7 @@ const ManageMotors = () => {
               <p className="text-3xl font-bold mt-2">{motors.length}</p>
             </div>
             <div className="p-3 bg-orange-100 rounded-xl">
-              <Bike className="w-6 h-6 text-orange-600" />
+              <Motorbike className="w-6 h-6 text-orange-600" />
             </div>
           </div>
         </div>

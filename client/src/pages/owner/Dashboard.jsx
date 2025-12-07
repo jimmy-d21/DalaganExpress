@@ -14,7 +14,6 @@ import {
   MapPin,
   Filter,
   Activity,
-  TrendingDown,
   Award,
   Target,
   BarChart3,
@@ -122,6 +121,7 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const { data } = await axios.get("/api/motor/owner/dashboard");
+      console.log("Dashboard API Response:", data); // Debug log
       if (data.success) {
         setDashboardData(
           data.dashboardData || {
@@ -139,6 +139,8 @@ const Dashboard = () => {
             monthlyBookings: [],
           }
         );
+      } else {
+        toast.error(data.message || "Failed to load dashboard data");
       }
     } catch (error) {
       console.error("Dashboard error:", error);
@@ -222,6 +224,11 @@ const Dashboard = () => {
     }
   }, [isOwner]);
 
+  // Debug effect
+  useEffect(() => {
+    console.log("Dashboard Data State:", dashboardData);
+  }, [dashboardData]);
+
   if (loading) return <LoadingScreen />;
 
   return (
@@ -231,6 +238,17 @@ const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className="min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50/20 p-4 md:p-6"
     >
+      {/* Debug Button */}
+      <button
+        onClick={() => {
+          console.log("Dashboard Data:", dashboardData);
+          console.log("Owner Bookings:", ownerBookings);
+        }}
+        className="fixed bottom-20 left-6 z-10 px-4 py-2 bg-gray-800 text-white rounded-lg text-sm"
+      >
+        Debug Data
+      </button>
+
       {/* Header with Welcome & Stats */}
       <div className="mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -782,7 +800,7 @@ const Dashboard = () => {
             </div>
 
             <button
-              onClick={() => navigate(`/owner/manage-motors`)}
+              onClick={() => navigate(`/owner/add-motor`)}
               className="w-full mt-4 py-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600 font-medium rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
             >
               <Plus className="w-4 h-4" />
