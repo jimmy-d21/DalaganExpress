@@ -27,14 +27,6 @@ const AppProvider = ({ children }) => {
   const [motors, setMotors] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
 
-  // Global Search State
-  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
-  const [globalPickupLocation, setGlobalPickupLocation] = useState("");
-  const [globalPickupDate, setGlobalPickupDate] = useState("");
-  const [globalReturnDate, setGlobalReturnDate] = useState("");
-  const [globalBikeType, setGlobalBikeType] = useState("");
-  const [globalSearchMode, setGlobalSearchMode] = useState("simple"); // 'simple' for navbar search, 'advanced' for hero search
-
   // Function to reset global search
   const resetGlobalSearch = () => {
     setGlobalSearchQuery("");

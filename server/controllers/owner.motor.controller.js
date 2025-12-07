@@ -172,14 +172,14 @@ export const getDashboardData = async (req, res) => {
 
     // Helper function to get booking amount
     const getBookingAmount = (booking) => {
-      if (booking.totalPrice) return booking.totalPrice;
-      if (booking.price) return booking.price;
+      if (booking.totalPrice) return Number(booking.totalPrice);
+      if (booking.price) return Number(booking.price);
       if (booking.motor?.pricePerDay) {
         const pickup = new Date(booking.pickupDate);
         const returnDate = new Date(booking.returnDate);
         const diffTime = Math.abs(returnDate - pickup);
         const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return booking.motor.pricePerDay * days;
+        return Number(booking.motor.pricePerDay) * days;
       }
       return 0;
     };
@@ -221,10 +221,12 @@ export const getDashboardData = async (req, res) => {
 
     const revenueChange =
       lastMonthRevenue > 0
-        ? (
-            ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) *
-            100
-          ).toFixed(1)
+        ? Number(
+            (
+              ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) *
+              100
+            ).toFixed(1)
+          )
         : monthlyRevenue > 0
         ? 100
         : 0;
@@ -311,38 +313,19 @@ export const getDashboardData = async (req, res) => {
       activeBookings: activeBookings.length,
       cancelledBookings: cancelledBookings.length,
 
-      totalEarnings,
-      monthlyRevenue,
-      revenueChange: parseFloat(revenueChange),
+      totalEarnings: totalEarnings,
+      monthlyRevenue: monthlyRevenue,
+      revenueChange: revenueChange,
 
-      recentBookings,
-      popularMotors,
-      averageRating,
-      monthlyBookings,
-
-      // Stats for cards
-      stats: {
-        earningsGrowth: revenueChange > 0 ? "up" : "down",
-        bookingGrowth: 12,
-        customerSatisfaction: 93,
-        motorUtilization:
-          Math.round((activeBookings.length / (motors.length || 1)) * 100) || 0,
-      },
+      recentBookings: recentBookings,
+      popularMotors: popularMotors,
+      averageRating: averageRating,
+      monthlyBookings: monthlyBookings,
     };
 
     res.json({
       success: true,
-      dashboardData,
-      summary: {
-        totalRevenue: `${currency}${totalEarnings.toLocaleString()}`,
-        monthlyGrowth: `${revenueChange}%`,
-        activeCustomers: allBookings.reduce((acc, booking) => {
-          if (booking.user && !acc.includes(booking.user._id.toString())) {
-            acc.push(booking.user._id.toString());
-          }
-          return acc;
-        }, []).length,
-      },
+      dashboardData: dashboardData,
     });
   } catch (error) {
     console.error("Error in getDashboardData controller:", error);
