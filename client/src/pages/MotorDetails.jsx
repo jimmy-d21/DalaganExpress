@@ -29,6 +29,7 @@ import {
   Lock,
   AlertCircle,
   User,
+  Globe,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
@@ -56,70 +57,51 @@ const MotorDetails = () => {
     user,
   } = useAppContext();
 
-  // Motorcycle pickup locations in Negros
-  const pickupLocations = [
-    {
-      id: "main-office",
-      name: "Bacolod Main Hub",
-      address: "Lacson Street, Bacolod City",
-      lat: 10.6407,
-      lng: 122.9687,
-      features: ["24/7 Support", "Free Parking", "Helmet Check", "Quick Wash"],
-      googleMapsUrl: "https://www.google.com/maps?q=10.6407,122.9687",
-      description: "Central location with full motorcycle services",
-    },
-    {
-      id: "airport",
-      name: "Bacolod-Silay Airport",
-      address: "Bacolod-Silay Airport, Silay City",
-      lat: 10.7667,
-      lng: 122.9667,
-      features: ["Airport Pickup", "Tourist Info", "Gear Rental", "Shuttle"],
-      googleMapsUrl: "https://www.google.com/maps?q=10.7667,122.9667",
-      description: "Perfect for arriving tourists",
-    },
-    {
-      id: "dumaguete",
-      name: "Dumaguete Seaside",
-      address: "Rizal Boulevard, Dumaguete City",
-      lat: 9.3109,
-      lng: 123.3077,
-      features: [
-        "Beach Access",
-        "Tour Guides",
-        "Cafe Nearby",
-        "Secure Parking",
-      ],
-      googleMapsUrl: "https://www.google.com/maps?q=9.3109,123.3077",
-      description: "Scenic location near the beach",
-    },
-    {
-      id: "mambukal",
-      name: "Mambukal Resort Gate",
-      address: "Mambukal, Murcia",
-      lat: 10.603,
-      lng: 123.134,
-      features: [
-        "Mountain Access",
-        "Tour Packages",
-        "Emergency Kit",
-        "Guide Service",
-      ],
-      googleMapsUrl: "https://www.google.com/maps?q=10.603,123.134",
-      description: "Gateway to Negros mountain adventures",
-    },
-  ];
+  // Generate Google Maps URL for motor location
+  const getGoogleMapsUrl = (location) => {
+    const encodedLocation = encodeURIComponent(
+      location + ", Negros Philippines"
+    );
+    return `https://www.google.com/maps?q=${encodedLocation}`;
+  };
 
-  // Fallback images for motorcycle locations
-  const fallbackMapImages = {
-    "main-office":
+  // Get static map image URL for motor location
+  const getStaticMapUrl = (location) => {
+    const encodedLocation = encodeURIComponent(
+      location + ", Negros Philippines"
+    );
+    const apiKey = "YOUR_GOOGLE_MAPS_API_KEY"; // Replace with actual API key if available
+    return `https://maps.googleapis.com/maps/api/staticmap?center=${encodedLocation}&zoom=14&size=600x400&markers=color:red%7C${encodedLocation}&key=${apiKey}`;
+  };
+
+  // Fallback images for different locations
+  const fallbackLocationImages = {
+    Bacolod:
+      "https://images.unsplash.com/photo-1580274455191-1c62238fa333?auto=format&fit=crop&w=1200&q=80",
+    Dumaguete:
       "https://images.unsplash.com/photo-1558980664-10e7170b5df9?auto=format&fit=crop&w=1200&q=80",
-    airport:
+    Silay:
       "https://images.unsplash.com/photo-1588797697582-efef1e0b1b13?auto=format&fit=crop&w=1200&q=80",
-    dumaguete:
-      "https://images.unsplash.com/photo-1558981285-501cd9af9426?auto=format&fit=crop&w=1200&q=80",
-    mambukal:
+    Mambukal:
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80",
+    default:
+      "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=1200&q=80",
+  };
+
+  // Get appropriate fallback image for motor location
+  const getFallbackImage = (location) => {
+    if (!location) return fallbackLocationImages.default;
+
+    const locationLower = location.toLowerCase();
+    if (locationLower.includes("bacolod"))
+      return fallbackLocationImages.Bacolod;
+    if (locationLower.includes("dumaguete"))
+      return fallbackLocationImages.Dumaguete;
+    if (locationLower.includes("silay")) return fallbackLocationImages.Silay;
+    if (locationLower.includes("mambukal"))
+      return fallbackLocationImages.Mambukal;
+
+    return fallbackLocationImages.default;
   };
 
   // Motorcycle-specific features
@@ -542,7 +524,7 @@ const MotorDetails = () => {
               </div>
             </motion.div>
 
-            {/* Map Section */}
+            {/* Map Section - Showing Actual Motor Location */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -551,9 +533,9 @@ const MotorDetails = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold">Pickup Locations</h2>
+                  <h2 className="text-2xl font-bold">Motorcycle Location</h2>
                   <p className="text-gray-600">
-                    Select your preferred pickup point in Negros
+                    This motorcycle is located in {motor.location}
                   </p>
                 </div>
                 <button
@@ -561,7 +543,7 @@ const MotorDetails = () => {
                   className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
                 >
                   <MapPin className="w-5 h-5" />
-                  {showMap ? "Hide Map" : "Show Map"}
+                  {showMap ? "Hide Map" : "Show Location"}
                 </button>
               </div>
 
@@ -574,9 +556,12 @@ const MotorDetails = () => {
                   <div className="aspect-video rounded-xl overflow-hidden shadow-lg relative border border-gray-200">
                     {/* Map Image */}
                     <img
-                      src={fallbackMapImages[pickupLocation]}
-                      alt="Pickup Location"
+                      src={getStaticMapUrl(motor.location)}
+                      alt={`${motor.location} Map`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = getFallbackImage(motor.location);
+                      }}
                     />
 
                     {/* Map Overlay */}
@@ -590,43 +575,27 @@ const MotorDetails = () => {
                               </div>
                               <div>
                                 <h3 className="text-xl font-bold">
-                                  {
-                                    pickupLocations.find(
-                                      (loc) => loc.id === pickupLocation
-                                    )?.name
-                                  }
+                                  Motorcycle Location
                                 </h3>
                                 <p className="text-white/90">
-                                  {
-                                    pickupLocations.find(
-                                      (loc) => loc.id === pickupLocation
-                                    )?.address
-                                  }
+                                  {motor.location}
                                 </p>
                               </div>
                             </div>
                             <p className="text-sm text-white/80">
-                              {
-                                pickupLocations.find(
-                                  (loc) => loc.id === pickupLocation
-                                )?.description
-                              }
+                              Pickup available at this location in Negros Island
                             </p>
                           </div>
 
                           {/* Google Maps Link */}
                           <a
-                            href={
-                              pickupLocations.find(
-                                (loc) => loc.id === pickupLocation
-                              )?.googleMapsUrl
-                            }
+                            href={getGoogleMapsUrl(motor.location)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 bg-white text-gray-800 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors shadow-lg font-medium"
                           >
                             <ExternalLink className="w-4 h-4" />
-                            <span>Open in Maps</span>
+                            <span>Open in Google Maps</span>
                           </a>
                         </div>
                       </div>
@@ -637,7 +606,7 @@ const MotorDetails = () => {
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-gradient-to-r from-red-500 to-orange-500 rounded-full"></div>
                         <span className="text-sm font-medium">
-                          Motorcycle Pickup
+                          Motorcycle Location
                         </span>
                       </div>
                     </div>
@@ -647,30 +616,42 @@ const MotorDetails = () => {
                   <div className="mt-4 grid grid-cols-4 gap-3">
                     {[
                       {
-                        label: "Quick Pickup",
-                        value: "10 min",
+                        label: "Location",
+                        value: "Negros Island",
                         color: "text-red-600",
+                        icon: <Globe className="w-4 h-4" />,
                       },
                       {
-                        label: "Free Parking",
-                        value: "Secure",
+                        label: "Region",
+                        value:
+                          motor.location.includes("Bacolod") ||
+                          motor.location.includes("Silay") ||
+                          motor.location.includes("Talisay")
+                            ? "Negros Occidental"
+                            : motor.location.includes("Dumaguete")
+                            ? "Negros Oriental"
+                            : "Negros Island",
                         color: "text-green-600",
+                        icon: <MapPin className="w-4 h-4" />,
                       },
                       {
-                        label: "Gear Check",
-                        value: "Included",
+                        label: "Availability",
+                        value: "Ready",
                         color: "text-blue-600",
+                        icon: <CheckCircle className="w-4 h-4" />,
                       },
                       {
-                        label: "Open Hours",
-                        value: "24/7",
+                        label: "Pickup Time",
+                        value: "Flexible",
                         color: "text-orange-600",
+                        icon: <Clock className="w-4 h-4" />,
                       },
                     ].map((stat, index) => (
                       <div
                         key={index}
-                        className="text-center p-3 bg-gray-50 rounded-lg"
+                        className="flex flex-col items-center p-3 bg-gray-50 rounded-lg"
                       >
+                        <div className={`mb-1 ${stat.color}`}>{stat.icon}</div>
                         <div className={`font-bold ${stat.color}`}>
                           {stat.value}
                         </div>
@@ -683,54 +664,61 @@ const MotorDetails = () => {
                 </motion.div>
               )}
 
+              {/* Location Details */}
               <div className="space-y-4">
-                {pickupLocations.map((location) => (
-                  <motion.button
-                    key={location.id}
-                    onClick={() => setPickupLocation(location.id)}
-                    whileHover={{ x: 5 }}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      pickupLocation === location.id
-                        ? "border-red-500 bg-gradient-to-r from-red-50 to-orange-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            pickupLocation === location.id
-                              ? "bg-gradient-to-r from-red-500 to-orange-500 text-white"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {location.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {location.address}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {location.features.map((feature, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"
-                              >
-                                {feature}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      {pickupLocation === location.id && (
-                        <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-                      )}
+                <div className="p-4 rounded-xl border-2 border-red-500 bg-gradient-to-r from-red-50 to-orange-50">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg">
+                      <MapPin className="w-5 h-5 text-white" />
                     </div>
-                  </motion.button>
-                ))}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">
+                        Motorcycle Pickup Location
+                      </h3>
+                      <p className="text-gray-600 mb-2">{motor.location}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-1 bg-white text-gray-700 rounded-full text-xs border border-gray-200">
+                          🏝️ Negros Island
+                        </span>
+                        <span className="px-2 py-1 bg-white text-gray-700 rounded-full text-xs border border-gray-200">
+                          🏍️ Motorcycle Ready
+                        </span>
+                        <span className="px-2 py-1 bg-white text-gray-700 rounded-full text-xs border border-gray-200">
+                          🕒 Flexible Pickup
+                        </span>
+                      </div>
+                    </div>
+                    <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+                  </div>
+                </div>
+
+                {/* Additional Location Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                      <Navigation className="w-4 h-4" />
+                      Getting There
+                    </h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Available for pickup at location</li>
+                      <li>• Clear directions provided upon booking</li>
+                      <li>• Parking available for your vehicle</li>
+                      <li>• 24/7 support for directions</li>
+                    </ul>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-xl">
+                    <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Safety & Security
+                    </h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Secure parking location</li>
+                      <li>• Verified pickup process</li>
+                      <li>• Insurance coverage at location</li>
+                      <li>• Emergency contact available</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

@@ -12,6 +12,7 @@ import {
   Heart,
   Fuel,
   Navigation,
+  Motorbike,
 } from "lucide-react";
 
 const AboutUs = () => {
@@ -126,7 +127,7 @@ const AboutUs = () => {
               transition={{ duration: 0.5, type: "spring" }}
               className="inline-flex items-center gap-2 mb-6 px-6 py-3 bg-blue-500/20 backdrop-blur-sm rounded-full"
             >
-              <Bike className="w-5 h-5" />
+              <Motorbike className="w-5 h-5" />
               <span className="text-sm font-medium text-blue-300">
                 Our Riding Story
               </span>
