@@ -23,16 +23,20 @@ import {
   ArrowUp,
   CreditCard,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
 
 const Footer = () => {
-  const navigate = useNavigate();
+  const { navigate, user } = useAppContext();
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
     { name: "Home", path: "/" },
     { name: "Browse Bikes", path: "/bikes", icon: "🚀" },
-    { name: "List Your Bike", path: "/owner", icon: "💼" },
+    {
+      name: user?.role === "owner" ? "Dashboard" : "List Your Bike",
+      path: "/owner",
+      icon: "💼",
+    },
     { name: "How It Works", path: "/how-it-works", icon: "🔧" },
     { name: "Rider Stories", path: "/stories", icon: "📖" },
     { name: "Contact", path: "/contact", icon: "📞" },
