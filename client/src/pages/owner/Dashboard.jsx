@@ -90,7 +90,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get("/api/owner/dashboard");
+      const { data } = await axios.get("/api/motor/owner/dashboard");
       if (data.success) {
         setStats(data.dashboardData);
       }
