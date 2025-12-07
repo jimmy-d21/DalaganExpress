@@ -41,6 +41,7 @@ import {
   User,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import MotorCard from "../components/MotorCard";
 
 const Favorite = () => {
   const navigate = useNavigate();
