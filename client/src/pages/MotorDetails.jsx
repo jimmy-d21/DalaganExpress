@@ -55,6 +55,7 @@ const MotorDetails = () => {
     setReturnDate,
     navigate,
     user,
+    setShowLogin,
   } = useAppContext();
 
   // Generate Google Maps URL for motor location
@@ -156,7 +157,7 @@ const MotorDetails = () => {
     // Check if user is logged in
     if (!user) {
       toast.error("Please login to book a motorcycle");
-      navigate("/login");
+      setShowLogin(true);
       return;
     }
 
