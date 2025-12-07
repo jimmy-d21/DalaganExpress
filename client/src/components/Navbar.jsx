@@ -45,40 +45,41 @@ const Navbar = () => {
 
   const isHomePage = location.pathname === "/";
 
-  // Owner dashboard menu items with icons
+  // Owner dashboard menu items with icons - ONLY EXISTING ROUTES
   const ownerMenuItems = [
     { icon: <Home className="w-4 h-4" />, label: "Dashboard", path: "/owner" },
     {
       icon: <Bike className="w-4 h-4" />,
       label: "My Bikes",
-      path: "/owner/bikes",
+      path: "/owner/manage-motors",
     },
     {
       icon: <Package className="w-4 h-4" />,
       label: "Bookings",
-      path: "/owner/bookings",
+      path: "/owner/manage-bookings",
     },
     {
       icon: <DollarSign className="w-4 h-4" />,
-      label: "Earnings",
-      path: "/owner/earnings",
-    },
-    {
-      icon: <BarChart3 className="w-4 h-4" />,
-      label: "Analytics",
-      path: "/owner/analytics",
-    },
-    {
-      icon: <Users className="w-4 h-4" />,
-      label: "Customers",
-      path: "/owner/customers",
-    },
-    {
-      icon: <Settings className="w-4 h-4" />,
-      label: "Settings",
-      path: "/owner/settings",
+      label: "Add Bike",
+      path: "/owner/add-motor",
     },
   ];
+
+  // Filter menuLinks to show only existing routes
+  const availableMenuLinks = menuLinks.filter((link) => {
+    // Check if route exists in your App.js
+    const validPaths = [
+      "/",
+      "/motors",
+      "/owner",
+      "/about",
+      "/contact",
+      "/careers",
+      "/bookings",
+      "/favorites",
+    ];
+    return validPaths.includes(link.path);
+  });
 
   const changeRole = async () => {
     try {
@@ -159,9 +160,9 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
-            {/* Menu Links */}
+            {/* Menu Links - Only existing routes */}
             <div className="flex items-center gap-8">
-              {menuLinks.map((link, index) => (
+              {availableMenuLinks.map((link, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: -20 }}
@@ -257,7 +258,7 @@ const Navbar = () => {
 
                         {/* User Menu Items */}
                         <div className="p-2">
-                          {/* Owner Section */}
+                          {/* Owner Section - Only existing routes */}
                           {user?.role === "owner" && isOwner ? (
                             <>
                               <div className="px-3 py-2">
@@ -305,7 +306,7 @@ const Navbar = () => {
                             </button>
                           )}
 
-                          {/* Renter Section */}
+                          {/* Renter Section - Only existing routes */}
                           <div className="px-3 py-2">
                             <div className="flex items-center gap-2 mb-2">
                               <ShieldCheck className="w-4 h-4 text-blue-500" />
@@ -401,9 +402,9 @@ const Navbar = () => {
             }`}
           >
             <div className="container mx-auto px-4 py-6">
-              {/* Mobile Links */}
+              {/* Mobile Links - Only existing routes */}
               <div className="space-y-2">
-                {menuLinks.map((link, index) => (
+                {availableMenuLinks.map((link, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
@@ -459,7 +460,7 @@ const Navbar = () => {
                       </div>
                     </div>
 
-                    {/* Owner Dashboard - Mobile */}
+                    {/* Owner Dashboard - Mobile - Only existing routes */}
                     {user?.role === "owner" && isOwner ? (
                       <div className="space-y-1">
                         <div className="px-4 py-2">
@@ -470,7 +471,7 @@ const Navbar = () => {
                             </span>
                           </div>
                         </div>
-                        {ownerMenuItems.slice(0, 4).map((item, index) => (
+                        {ownerMenuItems.map((item, index) => (
                           <button
                             key={index}
                             onClick={() => {
@@ -511,7 +512,7 @@ const Navbar = () => {
                       </button>
                     )}
 
-                    {/* Renter Tools - Mobile */}
+                    {/* Renter Tools - Mobile - Only existing routes */}
                     <div className="space-y-1">
                       <button
                         onClick={() => {
@@ -529,7 +530,7 @@ const Navbar = () => {
                       </button>
                       <button
                         onClick={() => {
-                          handleLinkClick(`/favorite`);
+                          handleLinkClick(`/favorites`);
                           setIsOpen(false);
                         }}
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-colors ${

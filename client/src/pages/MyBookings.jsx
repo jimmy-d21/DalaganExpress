@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import Loader from "../components/Loader";
+import toast from "react-hot-toast";
 
 const MyBookings = () => {
   const { currency, allBookings, fetchAllBookings, user, axios } =
@@ -136,6 +137,7 @@ const MyBookings = () => {
       });
       if (data.success) {
         await fetchAllBookings();
+        toast.success("Cancelled Booking Successfully");
       }
     } catch (error) {
       console.error("Failed to cancel booking:", error);
