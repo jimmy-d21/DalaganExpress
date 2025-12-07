@@ -27,16 +27,6 @@ const AppProvider = ({ children }) => {
   const [motors, setMotors] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
 
-  // Function to reset global search
-  const resetGlobalSearch = () => {
-    setGlobalSearchQuery("");
-    setGlobalPickupLocation("");
-    setGlobalPickupDate("");
-    setGlobalReturnDate("");
-    setGlobalBikeType("");
-    setGlobalSearchMode("simple");
-  };
-
   // Function to check user is logged in
   const fetchUser = async () => {
     try {
@@ -105,7 +95,7 @@ const AppProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsOwner(false);
-    resetGlobalSearch(); // Reset search on logout
+
     navigate("/");
     axios.defaults.headers.common["Authorization"] = "";
     toast.success("You have been logged out");

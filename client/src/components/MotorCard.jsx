@@ -26,7 +26,7 @@ import toast from "react-hot-toast";
 const MotorCard = ({ motor }) => {
   const currency = import.meta.env.VITE_CURRENCY || "$";
   const navigate = useNavigate();
-  const { user, axios } = useAppContext();
+  const { user, axios, setShowLogin } = useAppContext();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ const MotorCard = ({ motor }) => {
     e.stopPropagation();
 
     if (!user) {
-      navigate("/login");
+      setShowLogin(true);
       return;
     }
 
