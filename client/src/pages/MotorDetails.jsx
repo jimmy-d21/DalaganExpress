@@ -790,30 +790,14 @@ const MotorDetails = () => {
                     <Clock className="w-4 h-4" />
                     Adventure Duration
                   </label>
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setRentalDays(Math.max(1, rentalDays - 1))}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 cursor-pointer hover:scale-105 transition-all"
-                    >
-                      −
-                    </button>
-                    <div className="flex-1 text-center">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {rentalDays} day{rentalDays > 1 ? "s" : ""}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {currency}
-                        {motor.pricePerDay * rentalDays} base
-                      </div>
+                  <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-red-50 rounded-xl border border-gray-200">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
+                      {rentalDays} day{rentalDays > 1 ? "s" : ""}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setRentalDays(rentalDays + 1)}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 cursor-pointer hover:scale-105 transition-all"
-                    >
-                      +
-                    </button>
+                    <div className="text-sm text-gray-600">
+                      {currency}
+                      {motor.pricePerDay * rentalDays} base price
+                    </div>
                   </div>
                 </div>
 
