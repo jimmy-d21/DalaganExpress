@@ -43,8 +43,6 @@ const AddMotor = () => {
     description: "",
   });
 
-  console.log(`Motors: ${motors}`);
-
   // Motorcycle Categories
   const categories = [
     {
