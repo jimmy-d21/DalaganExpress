@@ -12,7 +12,7 @@ const generateToken = (userId) => {
 // Register User
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, confirmPassword } = req.body;
 
     if (!name || !email || !password || password.length < 8) {
       return res.json({ success: false, message: "Fill all the fields" });
@@ -21,6 +21,14 @@ export const registerUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.json({ success: false, message: "User already exists" });
+    }
+
+    if (password !== confirmPassword) {
+      return res.json({
+        success: false,
+        message:
+          "Passwords do not match. Please make sure both fields are identical.",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

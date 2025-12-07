@@ -1,10 +1,8 @@
-import React, { useState } from "react";
-import { dummyFavorite } from "../assets/assets";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   Trash2,
-  Car,
   Fuel,
   MapPin,
   Calendar,
@@ -13,82 +11,97 @@ import {
   Search,
   Users,
   Settings,
-  ChevronRight,
-  AlertCircle,
-  Clock,
-  DollarSign,
-  Navigation,
-  Shield,
-  Zap,
-  Wind,
-  Battery,
-  Wifi,
-  Music,
-  Camera,
-  X,
-  CheckCircle,
-  ShieldCheck,
-  Key,
   Gauge,
-  Volume2,
-  Sun,
-  Snowflake,
+  Zap,
+  Clock,
+  Battery,
+  Shield,
+  ShieldCheck,
+  CheckCircle,
+  X,
   Phone,
   Mail,
   Share2,
-  Download,
-  Printer,
   User,
+  Bike,
+  Sparkles,
+  Thermometer,
+  Droplets,
+  Bell,
+  Car as CarIcon,
+  Motorbike,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import MotorCard from "../components/MotorCard";
+import { useAppContext } from "../context/AppContext";
 
 const Favorite = () => {
-  const navigate = useNavigate();
-  const [favorites, setFavorites] = useState(dummyFavorite);
+  const { navigate, axios, user } = useAppContext();
+  const [favorites, setFavorites] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState([]);
   const [viewMode, setViewMode] = useState("grid");
-  const [selectedCar, setSelectedCar] = useState(null);
+  const [selectedMotor, setSelectedMotor] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  // Filter options
+  // Fetch user's favorite motors
+  useEffect(() => {
+    fetchFavorites();
+  }, []);
+
+  const fetchFavorites = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("/api/motor/user/favorites");
+      if (response.data.success) {
+        // Transform the data to match the existing structure
+        const transformedFavorites = response.data.favorites.map(
+          (motor, index) => ({
+            id: motor._id || `motor-${index}`,
+            motor: motor,
+            addedAt: "Recently",
+            addedBy: user?.name || "You",
+          })
+        );
+        setFavorites(transformedFavorites);
+      }
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter options for motorcycles
   const filterOptions = [
-    { id: "all", label: "All Cars", count: favorites.length },
+    { id: "all", label: "All Motors", count: favorites.length },
     {
-      id: "suv",
-      label: "SUV",
-      icon: "🚙",
+      id: "scooter",
+      label: "Scooter",
+      icon: "🛵",
       count: favorites.filter(
         (f) =>
-          f.car.type?.toLowerCase() === "suv" ||
-          f.car.category?.toLowerCase().includes("suv")
+          f.motor.category?.toLowerCase() === "scooter" ||
+          f.motor.type?.toLowerCase() === "scooter"
       ).length,
     },
     {
-      id: "sedan",
-      label: "Sedan",
-      icon: "🚗",
-      count: favorites.filter((f) => f.car.type?.toLowerCase() === "sedan")
-        .length,
+      id: "underbone",
+      label: "Underbone",
+      icon: "🏍️",
+      count: favorites.filter(
+        (f) => f.motor.category?.toLowerCase() === "underbone"
+      ).length,
     },
     {
-      id: "sports",
-      label: "Sports",
+      id: "big-bike",
+      label: "Big Bike",
       icon: "⚡",
       count: favorites.filter(
         (f) =>
-          f.car.type?.toLowerCase() === "sports" ||
-          f.car.category?.toLowerCase().includes("sports")
-      ).length,
-    },
-    {
-      id: "luxury",
-      label: "Luxury",
-      icon: "🏎️",
-      count: favorites.filter((f) =>
-        f.car.category?.toLowerCase().includes("luxury")
+          f.motor.category?.toLowerCase() === "big bike" ||
+          f.motor.category?.toLowerCase().includes("big")
       ).length,
     },
     {
@@ -96,7 +109,15 @@ const Favorite = () => {
       label: "Electric",
       icon: "🔋",
       count: favorites.filter(
-        (f) => f.car.fuel_type?.toLowerCase() === "electric"
+        (f) => f.motor.fuel_type?.toLowerCase() === "electric"
+      ).length,
+    },
+    {
+      id: "manual",
+      label: "Manual",
+      icon: "⚙️",
+      count: favorites.filter(
+        (f) => f.motor.transmission?.toLowerCase() === "manual"
       ).length,
     },
   ];
@@ -105,29 +126,41 @@ const Favorite = () => {
   const filteredFavorites = favorites.filter((favorite) => {
     const matchesSearch =
       searchTerm === "" ||
-      favorite.car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      favorite.car.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      favorite.car.category.toLowerCase().includes(searchTerm.toLowerCase());
+      favorite.motor.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      favorite.motor.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      favorite.motor.category?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilter =
       activeFilter === "all" ||
-      favorite.car.type?.toLowerCase() === activeFilter ||
-      favorite.car.category?.toLowerCase().includes(activeFilter) ||
-      favorite.car.fuel_type?.toLowerCase() === activeFilter;
+      favorite.motor.category?.toLowerCase().includes(activeFilter) ||
+      favorite.motor.fuel_type?.toLowerCase() === activeFilter ||
+      favorite.motor.transmission?.toLowerCase() === activeFilter;
 
     return matchesSearch && matchesFilter;
   });
 
   // Remove favorite
-  const removeFavorite = (id) => {
-    setFavorites(favorites.filter((fav) => fav.id !== id));
-    setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+  const removeFavorite = async (id) => {
+    try {
+      await axios.post("/api/motor/user/remove-favorite", { motorId: id });
+      setFavorites(favorites.filter((fav) => fav.id !== id));
+      setSelectedIds(selectedIds.filter((selectedId) => selectedId !== id));
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+    }
   };
 
   // Remove selected favorites
-  const removeSelected = () => {
-    setFavorites(favorites.filter((fav) => !selectedIds.includes(fav.id)));
-    setSelectedIds([]);
+  const removeSelected = async () => {
+    try {
+      for (const id of selectedIds) {
+        await axios.post("/api/motor/user/remove-favorite", { motorId: id });
+      }
+      setFavorites(favorites.filter((fav) => !selectedIds.includes(fav.id)));
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("Error removing selected favorites:", error);
+    }
   };
 
   // Toggle selection
@@ -155,105 +188,119 @@ const Favorite = () => {
     setSelectedIds([]);
   };
 
-  // Show car details
-  const showCarDetails = (car) => {
-    setSelectedCar(car);
+  // Show motor details
+  const showMotorDetails = (motor) => {
+    setSelectedMotor(motor);
     setShowDetails(true);
   };
 
   // Close details modal
   const closeDetails = () => {
     setShowDetails(false);
-    setSelectedCar(null);
+    setSelectedMotor(null);
   };
 
-  // Car features based on type
-  const getCarFeatures = (car) => {
+  // Motor features based on type
+  const getMotorFeatures = (motor) => {
     const baseFeatures = [
-      "Air Conditioning",
-      "Power Windows",
-      "Power Steering",
+      "Digital Instrument Cluster",
+      "LED Lighting",
       "ABS Brakes",
-      "Airbags",
-      "Bluetooth",
-      "USB Port",
-      "Backup Camera",
+      "Disc Brakes",
+      "Fuel Gauge",
+      "Trip Meter",
+      "Electric Start",
+      "Mobile Charger",
     ];
 
     const typeFeatures = {
-      luxury: [
-        "Leather Seats",
-        "Sunroof",
-        "Premium Sound",
-        "Navigation",
-        "Heated Seats",
+      scooter: [
+        "Under-seat Storage",
+        "Automatic Transmission",
+        "Step-through Design",
+        "CVT",
+        "Comfortable Seating",
       ],
-      sports: [
-        "Sport Mode",
-        "Paddle Shifters",
-        "Sport Suspension",
-        "Performance Tires",
+      underbone: [
+        "Sporty Design",
+        "Manual Transmission",
+        "Lightweight",
+        "Agile Handling",
+        "Fuel Efficient",
       ],
-      suv: ["4WD/AWD", "Roof Rails", "Towing Package", "Spacious Interior"],
+      "big bike": [
+        "Powerful Engine",
+        "Advanced Suspension",
+        "Riding Modes",
+        "Traction Control",
+        "Quick Shifter",
+      ],
       electric: [
         "Fast Charging",
         "Regenerative Braking",
         "Eco Mode",
         "Range Display",
-      ],
-      sedan: [
-        "Comfort Suspension",
-        "Quiet Cabin",
-        "Fuel Efficient",
-        "Spacious Trunk",
+        "Silent Operation",
       ],
     };
 
-    const type = car.type?.toLowerCase() || car.category?.toLowerCase();
+    const type = motor.category?.toLowerCase();
     const additionalFeatures = typeFeatures[type] || [];
 
     return [...baseFeatures, ...additionalFeatures].slice(0, 10);
   };
 
   // Specifications
-  const getSpecifications = (car) => [
+  const getSpecifications = (motor) => [
     {
       label: "Engine",
-      value: car.fuel_type === "Electric" ? "Electric Motor" : "V6 Turbo",
+      value: `${motor.engine_cc}cc`,
       icon: <Gauge className="w-4 h-4" />,
     },
     {
-      label: "Horsepower",
-      value: car.type === "Sports" ? "500 HP" : "300 HP",
+      label: "Power",
+      value: motor.engine_cc > 300 ? "45+ HP" : "10-30 HP",
       icon: <Zap className="w-4 h-4" />,
     },
     {
-      label: "0-60 mph",
-      value: car.type === "Sports" ? "3.5s" : "6.2s",
-      icon: <Clock className="w-4 h-4" />,
-    },
-    {
-      label: "Fuel Economy",
-      value: car.fuel_type === "Electric" ? "120 MPGe" : "28 MPG",
-      icon: <Fuel className="w-4 h-4" />,
-    },
-    {
       label: "Top Speed",
-      value: car.type === "Sports" ? "180 mph" : "130 mph",
+      value: motor.engine_cc > 300 ? "180+ km/h" : "90-120 km/h",
       icon: <Gauge className="w-4 h-4" />,
     },
     {
-      label: "Cargo Space",
-      value: car.type === "SUV" ? "65 cu ft" : "15 cu ft",
-      icon: <Car className="w-4 h-4" />,
+      label: "Fuel Economy",
+      value: motor.fuel_type === "Electric" ? "N/A" : "40-60 km/L",
+      icon: <Fuel className="w-4 h-4" />,
+    },
+    {
+      label: "Weight",
+      value: motor.category === "Big Bike" ? "180+ kg" : "100-150 kg",
+      icon: <Thermometer className="w-4 h-4" />,
+    },
+    {
+      label: "Seat Height",
+      value: motor.category === "Scooter" ? "750-800 mm" : "800-850 mm",
+      icon: <Users className="w-4 h-4" />,
     },
   ];
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500 mb-4"></div>
+          <p className="text-gray-600">Loading your favorites...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Car Details Modal */}
+      {/* Motor Details Modal */}
       <AnimatePresence>
-        {showDetails && selectedCar && (
+        {showDetails && selectedMotor && (
           <>
             {/* Backdrop */}
             <motion.div
@@ -282,10 +329,8 @@ const Favorite = () => {
                     {/* Header */}
                     <div className="relative">
                       <img
-                        src={selectedCar.car.image}
-                        alt={
-                          selectedCar.car.brand + " " + selectedCar.car.model
-                        }
+                        src={selectedMotor.motor.image}
+                        alt={`${selectedMotor.motor.brand} ${selectedMotor.motor.model}`}
                         className="w-full h-64 md:h-80 object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -300,15 +345,17 @@ const Favorite = () => {
                       <div className="absolute bottom-6 left-6 text-white">
                         <div className="flex items-center gap-3 mb-2">
                           <h1 className="text-3xl md:text-4xl font-bold">
-                            {selectedCar.car.brand} {selectedCar.car.model}
+                            {selectedMotor.motor.brand}{" "}
+                            {selectedMotor.motor.model}
                           </h1>
                           <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm">
-                            {selectedCar.car.year}
+                            {selectedMotor.motor.year}
                           </span>
                         </div>
                         <p className="text-lg text-gray-200">
-                          {selectedCar.car.category} •{" "}
-                          {selectedCar.car.location}
+                          {selectedMotor.motor.category} •{" "}
+                          {selectedMotor.motor.engine_cc}cc •{" "}
+                          {selectedMotor.motor.location}
                         </p>
                       </div>
                     </div>
@@ -322,16 +369,16 @@ const Favorite = () => {
                           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
                             <div>
                               <div className="text-4xl font-bold text-gray-900">
-                                ${selectedCar.car.pricePerDay}
+                                ₱{selectedMotor.motor.pricePerDay}
                                 <span className="text-lg text-gray-500">
                                   /day
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 mt-2">
                                 <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                                <span className="font-semibold">4.8</span>
+                                <span className="font-semibold">4.7</span>
                                 <span className="text-gray-500">
-                                  (128 reviews)
+                                  (96 reviews)
                                 </span>
                               </div>
                             </div>
@@ -341,16 +388,18 @@ const Favorite = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() =>
-                                  navigate(`/car-details/${selectedCar.car.id}`)
+                                  navigate(
+                                    `/motor-details/${selectedMotor.motor._id}`
+                                  )
                                 }
-                                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
                               >
                                 Book Now
                               </motion.button>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => removeFavorite(selectedCar.id)}
+                                onClick={() => removeFavorite(selectedMotor.id)}
                                 className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-red-300 hover:text-red-600 transition-all"
                               >
                                 <Trash2 className="w-4 h-4 inline-block mr-2" />
@@ -365,7 +414,7 @@ const Favorite = () => {
                               Description
                             </h3>
                             <p className="text-gray-600 leading-relaxed">
-                              {selectedCar.car.description}
+                              {selectedMotor.motor.description}
                             </p>
                           </div>
 
@@ -375,7 +424,7 @@ const Favorite = () => {
                               Specifications
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                              {getSpecifications(selectedCar.car).map(
+                              {getSpecifications(selectedMotor.motor).map(
                                 (spec, index) => (
                                   <div
                                     key={index}
@@ -402,7 +451,7 @@ const Favorite = () => {
                               Features
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                              {getCarFeatures(selectedCar.car).map(
+                              {getMotorFeatures(selectedMotor.motor).map(
                                 (feature, index) => (
                                   <div
                                     key={index}
@@ -429,10 +478,14 @@ const Favorite = () => {
                               </div>
                               <div>
                                 <h4 className="font-bold text-gray-900">
-                                  Available Now
+                                  {selectedMotor.motor.isAvailable
+                                    ? "Available Now"
+                                    : "Currently Booked"}
                                 </h4>
                                 <p className="text-sm text-gray-600">
-                                  Ready for immediate pickup
+                                  {selectedMotor.motor.isAvailable
+                                    ? "Ready for immediate pickup"
+                                    : "Check back later"}
                                 </p>
                               </div>
                             </div>
@@ -442,7 +495,7 @@ const Favorite = () => {
                                   Pickup Location:
                                 </span>
                                 <span className="font-semibold">
-                                  {selectedCar.car.location}
+                                  {selectedMotor.motor.location}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between">
@@ -452,9 +505,7 @@ const Favorite = () => {
                                 <span className="font-semibold">1 day</span>
                               </div>
                               <div className="flex items-center justify-between">
-                                <span className="text-gray-600">
-                                  Insurance:
-                                </span>
+                                <span className="text-gray-600">Helmet:</span>
                                 <span className="font-semibold text-green-600">
                                   Included
                                 </span>
@@ -472,25 +523,25 @@ const Favorite = () => {
                               <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-blue-500" />
                                 <span className="text-sm">
-                                  Advanced Airbag System
+                                  {selectedMotor.motor.category === "Big Bike"
+                                    ? "Dual Channel ABS"
+                                    : "Single Channel ABS"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-blue-500" />
+                                <span className="text-sm">Tubeless Tires</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-4 h-4 text-blue-500" />
+                                <span className="text-sm">
+                                  Rear Safety Guards
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-blue-500" />
                                 <span className="text-sm">
-                                  Electronic Stability Control
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm">
-                                  Lane Departure Warning
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm">
-                                  Automatic Emergency Braking
+                                  Emergency Kill Switch
                                 </span>
                               </div>
                             </div>
@@ -528,12 +579,12 @@ const Favorite = () => {
                             <div className="flex items-center gap-2 mb-2">
                               <Calendar className="w-4 h-4" />
                               <span>
-                                Added to favorites on {selectedCar.addedAt}
+                                Added to favorites {selectedMotor.addedAt}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <User className="w-4 h-4" />
-                              <span>Added by {selectedCar.addedBy}</span>
+                              <span>Added by {selectedMotor.addedBy}</span>
                             </div>
                           </div>
                         </div>
@@ -547,9 +598,8 @@ const Favorite = () => {
         )}
       </AnimatePresence>
 
-      {/* Rest of your existing code remains the same */}
       {/* Hero Header */}
-      <div className="relative bg-gradient-to-r from-purple-900 via-pink-800 to-rose-900 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-r from-blue-900 via-cyan-800 to-teal-900 text-white overflow-hidden">
         <div className="absolute inset-0 bg-grid-white/10 bg-grid-16 opacity-10"></div>
         <div className="relative container mx-auto px-4 py-16 md:py-20">
           <motion.div
@@ -559,22 +609,22 @@ const Favorite = () => {
             className="text-center max-w-4xl mx-auto"
           >
             <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full">
-              <Heart className="w-5 h-5 text-pink-300" fill="currentColor" />
-              <span className="text-sm font-medium text-pink-200">
-                Your Dream Collection
+              <Heart className="w-5 h-5 text-cyan-300" fill="currentColor" />
+              <span className="text-sm font-medium text-cyan-200">
+                Your Motorcycle Collection
               </span>
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               My{" "}
-              <span className="bg-gradient-to-r from-pink-400 to-rose-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent">
                 Favorite
               </span>{" "}
-              Cars
+              Motors
             </h1>
 
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              {favorites.length} premium vehicles saved for your next adventure
+              {favorites.length} premium motorcycles saved for your next ride
             </p>
 
             {/* Stats */}
@@ -590,19 +640,22 @@ const Favorite = () => {
               </div>
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4">
                 <div className="text-2xl font-bold">
-                  ${Math.min(...favorites.map((f) => f.car.pricePerDay))}
+                  ₱
+                  {favorites.length > 0
+                    ? Math.min(...favorites.map((f) => f.motor.pricePerDay))
+                    : 0}
                 </div>
                 <div className="text-sm text-gray-300">Lowest Price</div>
               </div>
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4">
                 <div className="text-2xl font-bold">
-                  {new Set(favorites.map((f) => f.car.brand)).size}
+                  {new Set(favorites.map((f) => f.motor.brand)).size}
                 </div>
                 <div className="text-sm text-gray-300">Brands</div>
               </div>
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl p-4">
                 <div className="text-2xl font-bold">
-                  {favorites.filter((f) => f.car.isAvaliable).length}
+                  {favorites.filter((f) => f.motor.isAvailable).length}
                 </div>
                 <div className="text-sm text-gray-300">Available Now</div>
               </div>
@@ -627,10 +680,10 @@ const Favorite = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search your favorites..."
+                    placeholder="Search your favorite motorcycles..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 </div>
@@ -644,7 +697,7 @@ const Favorite = () => {
                   onClick={() => setViewMode("grid")}
                   className={`p-3 rounded-lg ${
                     viewMode === "grid"
-                      ? "bg-pink-100 text-pink-700"
+                      ? "bg-blue-100 text-blue-700"
                       : "bg-gray-100 text-gray-600"
                   }`}
                 >
@@ -661,7 +714,7 @@ const Favorite = () => {
                   onClick={() => setViewMode("list")}
                   className={`p-3 rounded-lg ${
                     viewMode === "list"
-                      ? "bg-pink-100 text-pink-700"
+                      ? "bg-blue-100 text-blue-700"
                       : "bg-gray-100 text-gray-600"
                   }`}
                 >
@@ -707,7 +760,7 @@ const Favorite = () => {
                     onClick={() => setActiveFilter(filter.id)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                       activeFilter === filter.id
-                        ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg"
+                        ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -756,11 +809,11 @@ const Favorite = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                Your Favorite Collection
+                Your Motorcycle Collection
               </h2>
               <p className="text-gray-600 mt-2">
                 Showing{" "}
-                <span className="font-semibold text-pink-600">
+                <span className="font-semibold text-blue-600">
                   {filteredFavorites.length}
                 </span>{" "}
                 of{" "}
@@ -793,25 +846,25 @@ const Favorite = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="text-center py-20"
           >
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-pink-100 to-rose-100 rounded-full flex items-center justify-center">
-              <Heart className="w-12 h-12 text-pink-400" />
+            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full flex items-center justify-center">
+              <Motorbike className="w-12 h-12 text-blue-400" />
             </div>
             <h3 className="text-2xl font-semibold text-gray-900 mb-3">
               No favorites found
             </h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
               {searchTerm
-                ? `No favorites match your search for "${searchTerm}"`
+                ? `No motorcycles match your search for "${searchTerm}"`
                 : activeFilter !== "all"
-                ? `No ${activeFilter} cars in your favorites`
-                : "Start adding cars to your favorites to see them here!"}
+                ? `No ${activeFilter} motorcycles in your favorites`
+                : "Start adding motorcycles to your favorites to see them here!"}
             </p>
             {searchTerm || activeFilter !== "all" ? (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={clearFilters}
-                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
               >
                 View All Favorites
               </motion.button>
@@ -819,10 +872,10 @@ const Favorite = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => (window.location.href = "/cars")}
-                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                onClick={() => navigate("/motors")}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
               >
-                Browse Cars
+                Browse Motors
               </motion.button>
             )}
           </motion.div>
@@ -855,8 +908,8 @@ const Favorite = () => {
                           onClick={() => toggleSelect(favorite.id)}
                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                             selectedIds.includes(favorite.id)
-                              ? "bg-pink-500 border-pink-500"
-                              : "bg-white/90 border-gray-300 group-hover:border-pink-300"
+                              ? "bg-blue-500 border-blue-500"
+                              : "bg-white/90 border-gray-300 group-hover:border-blue-300"
                           }`}
                         >
                           {selectedIds.includes(favorite.id) && (
@@ -875,51 +928,55 @@ const Favorite = () => {
                         <Trash2 className="w-4 h-4" />
                       </motion.button>
 
-                      {/* Car Card */}
+                      {/* Motor Card */}
                       <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200 group-hover:shadow-2xl transition-all duration-300">
-                        {/* Car Image */}
+                        {/* Motor Image */}
                         <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                           <img
-                            src={favorite.car.image}
-                            alt={`${favorite.car.brand} ${favorite.car.model}`}
+                            src={favorite.motor.image}
+                            alt={`${favorite.motor.brand} ${favorite.motor.model}`}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
 
                           {/* Availability Badge */}
                           <div
                             className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold ${
-                              favorite.car.isAvaliable
+                              favorite.motor.isAvailable
                                 ? "bg-green-500/90 text-white"
                                 : "bg-red-500/90 text-white"
                             }`}
                           >
-                            {favorite.car.isAvaliable ? "Available" : "Booked"}
+                            {favorite.motor.isAvailable
+                              ? "Available"
+                              : "Booked"}
                           </div>
 
                           {/* Favorite Heart */}
-                          <div className="absolute top-4 left-4 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg">
+                          <div className="absolute top-4 left-12 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg">
                             <Heart
-                              className="w-4 h-4 text-pink-500"
+                              className="w-4 h-4 text-red-500"
                               fill="currentColor"
                             />
                           </div>
                         </div>
 
-                        {/* Car Details */}
+                        {/* Motor Details */}
                         <div className="p-6">
                           {/* Header */}
                           <div className="flex items-start justify-between mb-4">
                             <div>
                               <h3 className="text-xl font-bold text-gray-900">
-                                {favorite.car.brand} {favorite.car.model}
+                                {favorite.motor.brand} {favorite.motor.model}
                               </h3>
                               <p className="text-gray-500 text-sm">
-                                {favorite.car.year} • {favorite.car.category}
+                                {favorite.motor.year} •{" "}
+                                {favorite.motor.category} •{" "}
+                                {favorite.motor.engine_cc}cc
                               </p>
                             </div>
                             <div className="text-right">
                               <div className="text-2xl font-bold text-gray-900">
-                                ${favorite.car.pricePerDay}
+                                ₱{favorite.motor.pricePerDay}
                                 <span className="text-sm text-gray-500 font-normal">
                                   /day
                                 </span>
@@ -930,53 +987,53 @@ const Favorite = () => {
                           {/* Features */}
                           <div className="grid grid-cols-2 gap-3 mb-6">
                             <div className="flex items-center gap-2 text-gray-600">
-                              <Users className="w-4 h-4" />
-                              <span className="text-sm">
-                                {favorite.car.seating_capacity} seats
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
                               <Fuel className="w-4 h-4" />
                               <span className="text-sm">
-                                {favorite.car.fuel_type}
+                                {favorite.motor.fuel_type}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                               <Settings className="w-4 h-4" />
                               <span className="text-sm">
-                                {favorite.car.transmission}
+                                {favorite.motor.transmission}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Gauge className="w-4 h-4" />
+                              <span className="text-sm">
+                                {favorite.motor.engine_cc}cc
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
                               <MapPin className="w-4 h-4" />
                               <span className="text-sm truncate">
-                                {favorite.car.location}
+                                {favorite.motor.location}
                               </span>
                             </div>
                           </div>
 
                           {/* Description */}
                           <p className="text-gray-600 text-sm mb-6 line-clamp-2">
-                            {favorite.car.description}
+                            {favorite.motor.description}
                           </p>
 
                           {/* Action Buttons */}
                           <div className="flex gap-3">
                             <motion.button
                               onClick={() =>
-                                navigate(`/car-details/${favorite.car.id}`)
+                                navigate(`/motor-details/${favorite.motor._id}`)
                               }
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                              className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
                             >
                               Book Now
                             </motion.button>
                             <motion.button
-                              onClick={() => showCarDetails(favorite)}
+                              onClick={() => showMotorDetails(favorite)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-pink-300 hover:text-pink-600 transition-all"
+                              className="px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-blue-300 hover:text-blue-600 transition-all"
                             >
                               Details
                             </motion.button>
@@ -990,7 +1047,7 @@ const Favorite = () => {
                             </div>
                             <div className="flex items-center gap-1">
                               <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                              <span>4.8</span>
+                              <span>4.7</span>
                             </div>
                           </div>
                         </div>
@@ -1019,8 +1076,8 @@ const Favorite = () => {
                               onClick={() => toggleSelect(favorite.id)}
                               className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
                                 selectedIds.includes(favorite.id)
-                                  ? "bg-pink-500 border-pink-500"
-                                  : "bg-white/90 border-gray-300 group-hover:border-pink-300"
+                                  ? "bg-blue-500 border-blue-500"
+                                  : "bg-white/90 border-gray-300 group-hover:border-blue-300"
                               }`}
                             >
                               {selectedIds.includes(favorite.id) && (
@@ -1030,20 +1087,20 @@ const Favorite = () => {
                           </div>
 
                           <img
-                            src={favorite.car.image}
-                            alt={`${favorite.car.brand} ${favorite.car.model}`}
+                            src={favorite.motor.image}
+                            alt={`${favorite.motor.brand} ${favorite.motor.model}`}
                             className="w-full h-48 md:h-full object-cover"
                           />
 
                           <div className="absolute bottom-4 left-4">
                             <div
                               className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                favorite.car.isAvaliable
+                                favorite.motor.isAvailable
                                   ? "bg-green-500/90 text-white"
                                   : "bg-red-500/90 text-white"
                               }`}
                             >
-                              {favorite.car.isAvaliable
+                              {favorite.motor.isAvailable
                                 ? "Available"
                                 : "Booked"}
                             </div>
@@ -1056,20 +1113,20 @@ const Favorite = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-xl font-bold text-gray-900">
-                                  {favorite.car.brand} {favorite.car.model}
+                                  {favorite.motor.brand} {favorite.motor.model}
                                 </h3>
-                                <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs font-semibold rounded">
-                                  {favorite.car.category}
+                                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
+                                  {favorite.motor.category}
                                 </span>
                               </div>
                               <p className="text-gray-600 text-sm mb-4">
-                                {favorite.car.description}
+                                {favorite.motor.description}
                               </p>
                             </div>
                             <div className="flex items-center gap-4">
                               <div className="text-right">
                                 <div className="text-2xl font-bold text-gray-900">
-                                  ${favorite.car.pricePerDay}
+                                  ₱{favorite.motor.pricePerDay}
                                   <span className="text-sm text-gray-500 font-normal">
                                     /day
                                   </span>
@@ -1098,7 +1155,7 @@ const Favorite = () => {
                                   Fuel Type
                                 </div>
                                 <div className="font-medium">
-                                  {favorite.car.fuel_type}
+                                  {favorite.motor.fuel_type}
                                 </div>
                               </div>
                             </div>
@@ -1109,18 +1166,18 @@ const Favorite = () => {
                                   Transmission
                                 </div>
                                 <div className="font-medium">
-                                  {favorite.car.transmission}
+                                  {favorite.motor.transmission}
                                 </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-gray-400" />
+                              <Gauge className="w-4 h-4 text-gray-400" />
                               <div>
                                 <div className="text-xs text-gray-500">
-                                  Seats
+                                  Engine
                                 </div>
                                 <div className="font-medium">
-                                  {favorite.car.seating_capacity}
+                                  {favorite.motor.engine_cc}cc
                                 </div>
                               </div>
                             </div>
@@ -1131,7 +1188,7 @@ const Favorite = () => {
                                   Location
                                 </div>
                                 <div className="font-medium truncate">
-                                  {favorite.car.location}
+                                  {favorite.motor.location}
                                 </div>
                               </div>
                             </div>
@@ -1141,19 +1198,19 @@ const Favorite = () => {
                           <div className="flex gap-3">
                             <motion.button
                               onClick={() =>
-                                navigate(`/car-details/${favorite.car.id}`)
+                                navigate(`/motor-details/${favorite.motor._id}`)
                               }
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                              className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
                             >
                               Book Now
                             </motion.button>
                             <motion.button
-                              onClick={() => showCarDetails(favorite)}
+                              onClick={() => showMotorDetails(favorite)}
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-pink-300 hover:text-pink-600 transition-all"
+                              className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:border-blue-300 hover:text-blue-600 transition-all"
                             >
                               View Details
                             </motion.button>
@@ -1176,52 +1233,55 @@ const Favorite = () => {
             transition={{ duration: 0.6, delay: 0.7 }}
             className="max-w-7xl mx-auto mt-12"
           >
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-3xl p-8">
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-3xl p-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="inline-flex p-4 bg-purple-100 rounded-2xl mb-4">
-                    <Car className="w-8 h-8 text-purple-600" />
+                  <div className="inline-flex p-4 bg-blue-100 rounded-2xl mb-4">
+                    <Bike className="w-8 h-8 text-blue-600" />
                   </div>
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">
                     Total Value
                   </h4>
-                  <p className="text-2xl font-bold text-purple-600">
-                    $
+                  <p className="text-2xl font-bold text-blue-600">
+                    ₱
                     {favorites.reduce(
-                      (sum, fav) => sum + fav.car.pricePerDay,
+                      (sum, fav) => sum + fav.motor.pricePerDay,
                       0
                     )}
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="inline-flex p-4 bg-pink-100 rounded-2xl mb-4">
-                    <Star className="w-8 h-8 text-pink-600" />
+                  <div className="inline-flex p-4 bg-cyan-100 rounded-2xl mb-4">
+                    <Star className="w-8 h-8 text-cyan-600" />
                   </div>
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">
                     Avg. Rating
                   </h4>
-                  <p className="text-2xl font-bold text-pink-600">4.8</p>
+                  <p className="text-2xl font-bold text-cyan-600">4.7</p>
                 </div>
                 <div className="text-center">
-                  <div className="inline-flex p-4 bg-rose-100 rounded-2xl mb-4">
-                    <Heart className="w-8 h-8 text-rose-600" />
+                  <div className="inline-flex p-4 bg-teal-100 rounded-2xl mb-4">
+                    <Heart
+                      className="w-8 h-8 text-teal-600"
+                      fill="currentColor"
+                    />
                   </div>
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">
                     Favorite Brands
                   </h4>
-                  <p className="text-2xl font-bold text-rose-600">
-                    {new Set(favorites.map((f) => f.car.brand)).size}
+                  <p className="text-2xl font-bold text-teal-600">
+                    {new Set(favorites.map((f) => f.motor.brand)).size}
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="inline-flex p-4 bg-violet-100 rounded-2xl mb-4">
-                    <Shield className="w-8 h-8 text-violet-600" />
+                  <div className="inline-flex p-4 bg-indigo-100 rounded-2xl mb-4">
+                    <Shield className="w-8 h-8 text-indigo-600" />
                   </div>
                   <h4 className="text-xl font-semibold text-gray-900 mb-2">
                     Ready to Book
                   </h4>
-                  <p className="text-2xl font-bold text-violet-600">
-                    {favorites.filter((f) => f.car.isAvaliable).length}
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {favorites.filter((f) => f.motor.isAvailable).length}
                   </p>
                 </div>
               </div>

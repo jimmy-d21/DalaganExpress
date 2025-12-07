@@ -128,13 +128,13 @@ const MyBookings = () => {
   };
 
   const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?"))
-      return;
-
     try {
       setLoading(true);
-      const response = await axios.post(`/api/bookings/cancel/${bookingId}`);
-      if (response.data.success) {
+      const { data } = await axios.post(`/api/motor/bookings/change-status`, {
+        bookingId,
+        status: "cancelled",
+      });
+      if (data.success) {
         await fetchAllBookings();
       }
     } catch (error) {
@@ -325,13 +325,6 @@ const MyBookings = () => {
                             >
                               {statusConfig.icon}
                               {statusConfig.label}
-                            </span>
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getPaymentStatusConfig(
-                                booking.paymentStatus
-                              )}`}
-                            >
-                              {booking.paymentStatus?.toUpperCase()}
                             </span>
                           </div>
                           <p className="text-gray-600 mb-1">

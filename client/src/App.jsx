@@ -24,7 +24,7 @@ import Motors from "./pages/Motors";
 import ManageMotors from "./pages/ManageMotors";
 
 const App = () => {
-  const { showLogin } = useAppContext();
+  const { showLogin, user } = useAppContext();
   const isOwnerPath = useLocation().pathname.startsWith("/owner");
 
   return (
@@ -36,11 +36,11 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/motor-details/:id" element={<MotorDetails />} />
         <Route path="/motors" element={<Motors />} />
-        <Route path="/bookings" element={<MyBookings />} />
+        <Route path="/bookings" element={user ? <MyBookings /> : <Home />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/careers" element={<Careers />} />
-        <Route path="/favorite" element={<Favorite />} />
+        <Route path="/favorite" element={user ? <Favorite /> : <Home />} />
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="add-motor" element={<AddMotor />} />

@@ -2,7 +2,18 @@ import React, { useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Mail, Lock, Eye, EyeOff, Bike, Sparkles } from "lucide-react";
+import {
+  X,
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Bike,
+  Sparkles,
+  Motorbike,
+  Shield,
+} from "lucide-react";
 
 const Login = () => {
   const { setShowLogin, axios, setToken, navigate, fetchUser } =
@@ -11,12 +22,34 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const validateForm = () => {
+    if (state === "register") {
+      if (password !== confirmPassword) {
+        toast.error("Passwords do not match");
+        return false;
+      }
+      if (password.length < 6) {
+        toast.error("Password must be at least 6 characters long");
+        return false;
+      }
+    }
+    return true;
+  };
 
   const onSubmitHandler = async (event) => {
     try {
       event.preventDefault();
+
+      // Validate form before submission
+      if (!validateForm()) {
+        return;
+      }
+
       setIsLoading(true);
 
       const { data } = await axios.post(`/api/user/${state}`, {
@@ -43,6 +76,39 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
+  const resetForm = () => {
+    setName("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const toggleState = (newState) => {
+    setState(newState);
+    resetForm();
+  };
+
+  const isPasswordMatch = () => {
+    if (state === "login" || !confirmPassword) return true;
+    return password === confirmPassword;
+  };
+
+  const getPasswordStrength = () => {
+    if (password.length === 0)
+      return { strength: 0, color: "bg-gray-200", text: "" };
+    if (password.length < 6)
+      return { strength: 25, color: "bg-red-500", text: "Weak" };
+    if (password.length < 8)
+      return { strength: 50, color: "bg-orange-500", text: "Fair" };
+    if (password.length < 10)
+      return { strength: 75, color: "bg-yellow-500", text: "Good" };
+    return { strength: 100, color: "bg-green-500", text: "Strong" };
+  };
+
+  const passwordStrength = getPasswordStrength();
 
   return (
     <AnimatePresence>
@@ -125,7 +191,7 @@ const Login = () => {
                       placeholder="Enter your full name"
                       className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       type="text"
-                      required
+                      required={state === "register"}
                     />
                     <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   </div>
@@ -179,13 +245,110 @@ const Login = () => {
                     )}
                   </button>
                 </div>
+
+                {/* Password Strength Indicator (only for register) */}
+                {state === "register" && password.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Password strength</span>
+                      <span className="font-medium text-gray-700">
+                        {passwordStrength.text}
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${passwordStrength.strength}%` }}
+                        className={`h-full ${passwordStrength.color} transition-all duration-300`}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {password.length < 6
+                        ? "Must be at least 6 characters"
+                        : "✓ Good to go"}
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {/* Confirm Password Field (only for register) */}
+              {state === "register" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="space-y-2"
+                >
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Shield className="w-4 h-4 text-orange-500" />
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={confirmPassword}
+                      placeholder="Re-enter your password"
+                      className={`w-full pl-12 pr-12 py-3 bg-white border rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-all ${
+                        !isPasswordMatch() && confirmPassword
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:ring-orange-500 focus:border-transparent"
+                      }`}
+                      type={showConfirmPassword ? "text" : "password"}
+                      required={state === "register"}
+                    />
+                    <Shield className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Password Match Indicator */}
+                  {confirmPassword && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      {isPasswordMatch() ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+                          </div>
+                          <span className="text-green-600">
+                            Passwords match
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+                            <X className="w-3 h-3 text-white" />
+                          </div>
+                          <span className="text-red-600">
+                            Passwords do not match
+                          </span>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
 
               {/* Submit Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                disabled={isLoading}
+                disabled={
+                  isLoading || (state === "register" && !isPasswordMatch())
+                }
                 type="submit"
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
               >
@@ -196,7 +359,7 @@ const Login = () => {
                   </>
                 ) : (
                   <>
-                    <Bike className="w-5 h-5" />
+                    <Motorbike className="w-5 h-5" />
                     <span>
                       {state === "login" ? "Sign In" : "Create Account"}
                     </span>
@@ -213,12 +376,9 @@ const Login = () => {
                     : "Already have an account?"}
                   <button
                     type="button"
-                    onClick={() => {
-                      setState(state === "login" ? "register" : "login");
-                      setName("");
-                      setEmail("");
-                      setPassword("");
-                    }}
+                    onClick={() =>
+                      toggleState(state === "login" ? "register" : "login")
+                    }
                     className="ml-2 font-semibold text-orange-600 hover:text-orange-700 transition-colors"
                   >
                     {state === "login" ? "Sign up now" : "Sign in instead"}
