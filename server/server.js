@@ -20,14 +20,14 @@ await connectDB();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-app.get(`/`, (req, res) => {
-  res.send(`Server is running for car rental`);
-});
-
 // Routes
 app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);
 app.use("/api/bookings", bookingRouter);
+
+app.get(`/`, (req, res) => {
+  res.send(`Server is ready in Dalagan Express`);
+});
 
 // Routes
 app.use("/api/motor/user", userMotorRouter);
