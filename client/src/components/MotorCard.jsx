@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Bike,
@@ -20,21 +20,63 @@ import {
   Motorbike,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const MotorCard = ({ motor }) => {
   const currency = import.meta.env.VITE_CURRENCY || "$";
   const navigate = useNavigate();
+  const { user, axios } = useAppContext();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Check if motor is in user's favorites
+  useEffect(() => {
+    if (user && motor) {
+      const isMotorInFavorites = user.favorites?.some(
+        (fav) => fav.motor?._id === motor._id || fav.motor === motor._id
+      );
+      setIsFavorite(isMotorInFavorites);
+    }
+  }, [user, motor]);
 
   const handleCardClick = () => {
     navigate(`/motor-details/${motor._id}`);
     window.scrollTo(0, 0);
   };
 
-  const handleFavoriteClick = (e) => {
+  const handleFavoriteClick = async (e) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        await axios.post("/api/motor/user/remove-favorite", {
+          motorId: motor._id,
+        });
+        setIsFavorite(false);
+        toast.success(`Remove favorite successfully`);
+      } else {
+        // Add to favorites
+        await axios.post("/api/motor/user/add-favorite", {
+          motorId: motor._id,
+        });
+        setIsFavorite(true);
+        toast.success(`Added favorite successfully`);
+      }
+    } catch (error) {
+      console.error("Error updating favorite:", error);
+      // Optionally show a toast notification
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Motorcycle category icons mapping
@@ -138,16 +180,32 @@ const MotorCard = ({ motor }) => {
       {/* Favorite Button */}
       <button
         onClick={handleFavoriteClick}
-        className="absolute top-4 right-4 z-20 p-2 bg-black/50 backdrop-blur-sm rounded-full hover:bg-black/70 transition-all duration-300 hover:scale-110"
+        disabled={loading}
+        className="absolute top-4 right-4 z-20 p-2 bg-black/50 backdrop-blur-sm rounded-full hover:bg-black/70 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Heart
           className={`w-4 h-4 transition-all duration-300 ${
             isFavorite
               ? "fill-red-500 text-red-500 scale-110"
-              : "text-gray-400 hover:text-white"
+              : user
+              ? "text-gray-400 hover:text-white"
+              : "text-gray-600"
           }`}
         />
       </button>
+
+      {/* Login prompt tooltip for non-logged in users */}
+      {!user && isHovered && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-12 right-4 z-30 px-3 py-2 bg-black/80 backdrop-blur-sm border border-gray-700 rounded-lg"
+        >
+          <p className="text-xs text-gray-300 whitespace-nowrap">
+            Login to add to favorites
+          </p>
+        </motion.div>
+      )}
 
       {/* Availability Badge */}
       {motor.isAvailable && (

@@ -15,12 +15,12 @@ export const registerUser = async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password || password.length < 8) {
-      return res.json({ success: false, message: "Fill all the feilds" });
+      return res.json({ success: false, message: "Fill all the fields" });
     }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.json({ success: false, message: "User already exist" });
+      return res.json({ success: false, message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -34,8 +34,8 @@ export const registerUser = async (req, res) => {
     const token = generateToken(user._id.toString());
     res.json({ success: true, token });
   } catch (error) {
-    console.log("Error in registerUser controller");
-    res.json({ success: false, message: error.message });
+    console.log("Error in registerUser controller:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -57,8 +57,8 @@ export const loginUser = async (req, res) => {
     const token = generateToken(user._id.toString());
     res.json({ success: true, token });
   } catch (error) {
-    console.log("Error in loginUser controller");
-    res.json({ success: false, message: error.message });
+    console.log("Error in loginUser controller:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -66,10 +66,19 @@ export const loginUser = async (req, res) => {
 export const getUserData = async (req, res) => {
   try {
     const { user } = req;
-    res.json({ success: true, user });
+
+    // Populate favorites with motor details
+    const userWithFavorites = await User.findById(user._id)
+      .select("-password")
+      .populate({
+        path: "favorites.motor",
+        select: "brand model image pricePerDay engine_cc category",
+      });
+
+    res.json({ success: true, user: userWithFavorites });
   } catch (error) {
-    console.log("Error in getUserData controller");
-    res.json({ success: false, message: error.message });
+    console.log("Error in getUserData controller:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -85,9 +94,158 @@ export const getAllMotors = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in getAllMotors controller:", error);
-    res.json({
+    res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+// Add motor to favorites
+export const addToFavorites = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { motorId } = req.body;
+
+    // Validate input
+    if (!motorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Motor ID is required",
+      });
+    }
+
+    // Check if motor exists
+    const motor = await Motor.findById(motorId);
+    if (!motor) {
+      return res.status(404).json({
+        success: false,
+        message: "Motor not found",
+      });
+    }
+
+    // Check if already in favorites
+    const user = await User.findById(userId);
+    const alreadyFavorite = user.favorites.some(
+      (fav) => fav.motor.toString() === motorId
+    );
+
+    if (alreadyFavorite) {
+      return res.json({
+        success: true,
+        message: "Motor already in favorites",
+        user,
+      });
+    }
+
+    // Add to favorites
+    user.favorites.push({ motor: motorId });
+    await user.save();
+
+    // Populate the updated user
+    const updatedUser = await User.findById(userId)
+      .select("-password")
+      .populate({
+        path: "favorites.motor",
+        select: "brand model image pricePerDay engine_cc category",
+      });
+
+    res.json({
+      success: true,
+      message: "Added to favorites",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in addToFavorites controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+// Remove motor from favorites
+export const removeFromFavorites = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { motorId } = req.body;
+
+    // Validate input
+    if (!motorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Motor ID is required",
+      });
+    }
+
+    // Remove from favorites
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { favorites: { motor: motorId } } },
+      { new: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Populate the updated user
+    const updatedUser = await User.findById(userId)
+      .select("-password")
+      .populate({
+        path: "favorites.motor",
+        select: "brand model image pricePerDay engine_cc category",
+      });
+
+    res.json({
+      success: true,
+      message: "Removed from favorites",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error in removeFromFavorites controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+// Get user's favorite motors
+export const getFavorites = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId).select("favorites").populate({
+      path: "favorites.motor",
+      select:
+        "brand model image pricePerDay engine_cc category fuel_type transmission location year isAvailable",
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Extract only the motor details
+    const favoriteMotors = user.favorites
+      .map((fav) => fav.motor)
+      .filter((motor) => motor !== null);
+
+    res.json({
+      success: true,
+      favorites: favoriteMotors,
+    });
+  } catch (error) {
+    console.error("Error in getFavorites controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Internal server error",
     });
   }
 };
