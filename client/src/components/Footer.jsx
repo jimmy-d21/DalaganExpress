@@ -33,9 +33,13 @@ const Footer = () => {
     { name: "Home", path: "/" },
     { name: "Browse Bikes", path: "/bikes", icon: "🚀" },
     {
-      name: user?.role === "owner" ? "Dashboard" : "List Your Bike",
+      name: user
+        ? user?.role === "owner"
+          ? "Dashboard"
+          : "List Your Bike"
+        : "",
       path: "/owner",
-      icon: "💼",
+      icon: user ? "💼" : "",
     },
     { name: "How It Works", path: "/how-it-works", icon: "🔧" },
     { name: "Rider Stories", path: "/stories", icon: "📖" },
