@@ -12,6 +12,18 @@ import {
   Bell,
   ChevronDown,
   Heart,
+  BarChart3,
+  Bike,
+  Settings,
+  DollarSign,
+  Users,
+  Package,
+  TrendingUp,
+  Home,
+  Key,
+  ClipboardCheck,
+  ShieldCheck,
+  Award,
 } from "lucide-react";
 import { menuLinks } from "../assets/assets";
 
@@ -32,6 +44,41 @@ const Navbar = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const isHomePage = location.pathname === "/";
+
+  // Owner dashboard menu items with icons
+  const ownerMenuItems = [
+    { icon: <Home className="w-4 h-4" />, label: "Dashboard", path: "/owner" },
+    {
+      icon: <Bike className="w-4 h-4" />,
+      label: "My Bikes",
+      path: "/owner/bikes",
+    },
+    {
+      icon: <Package className="w-4 h-4" />,
+      label: "Bookings",
+      path: "/owner/bookings",
+    },
+    {
+      icon: <DollarSign className="w-4 h-4" />,
+      label: "Earnings",
+      path: "/owner/earnings",
+    },
+    {
+      icon: <BarChart3 className="w-4 h-4" />,
+      label: "Analytics",
+      path: "/owner/analytics",
+    },
+    {
+      icon: <Users className="w-4 h-4" />,
+      label: "Customers",
+      path: "/owner/customers",
+    },
+    {
+      icon: <Settings className="w-4 h-4" />,
+      label: "Settings",
+      path: "/owner/settings",
+    },
+  ];
 
   const changeRole = async () => {
     try {
@@ -188,9 +235,10 @@ const Navbar = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
+                        className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden"
                         onMouseLeave={() => setShowUserMenu(false)}
                       >
+                        {/* User Info */}
                         <div className="p-4 border-b border-gray-100">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center">
@@ -207,48 +255,99 @@ const Navbar = () => {
                           </div>
                         </div>
 
+                        {/* User Menu Items */}
                         <div className="p-2">
+                          {/* Owner Section */}
                           {user?.role === "owner" && isOwner ? (
-                            <button
-                              onClick={() => handleLinkClick("/owner")}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <span>Owner Dashboard</span>
-                            </button>
+                            <>
+                              <div className="px-3 py-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Award className="w-4 h-4 text-yellow-500" />
+                                  <span className="text-xs font-semibold text-gray-500 uppercase">
+                                    Owner Dashboard
+                                  </span>
+                                </div>
+                                {ownerMenuItems.map((item, index) => (
+                                  <button
+                                    key={index}
+                                    onClick={() => {
+                                      handleLinkClick(item.path);
+                                      setShowUserMenu(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-200 cursor-pointer"
+                                  >
+                                    <div className="text-orange-500">
+                                      {item.icon}
+                                    </div>
+                                    <span className="font-medium">
+                                      {item.label}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="h-px bg-gray-100 mx-3 my-2"></div>
+                            </>
                           ) : (
                             <button
                               onClick={changeRole}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                              className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-700 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-200 mb-2"
                             >
-                              <List className="w-4 h-4 text-orange-500" />
-                              <span>List Your Bike</span>
+                              <div className="p-2 bg-orange-100 rounded-lg">
+                                <Key className="w-4 h-4 text-orange-600" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold">Become an Owner</p>
+                                <p className="text-xs text-gray-500">
+                                  List your bike and earn money
+                                </p>
+                              </div>
+                              <TrendingUp className="w-4 h-4 text-orange-500" />
                             </button>
                           )}
 
-                          <div
-                            onClick={() => handleLinkClick(`/bookings`)}
-                            className="flex items-center gap-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Bell className="w-4 h-4 text-blue-500" />
-                            <span>My Bookings</span>
-                          </div>
-                          <div
-                            onClick={() => handleLinkClick(`/favorite`)}
-                            className="flex items-center gap-3 px-4 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <Heart className="w-4 h-4 text-blue-500" />
-                            <span>Favorite</span>
+                          {/* Renter Section */}
+                          <div className="px-3 py-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <ShieldCheck className="w-4 h-4 text-blue-500" />
+                              <span className="text-xs font-semibold text-gray-500 uppercase">
+                                Renter Tools
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                handleLinkClick(`/bookings`);
+                                setShowUserMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all duration-200 mb-1"
+                            >
+                              <ClipboardCheck className="w-4 h-4 text-blue-500" />
+                              <span className="font-medium">My Bookings</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleLinkClick(`/favorites`);
+                                setShowUserMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-gray-700 hover:bg-pink-50 hover:text-pink-600 rounded-lg transition-all duration-200 mb-1"
+                            >
+                              <Heart className="w-4 h-4 text-pink-500" />
+                              <span className="font-medium">Favorites</span>
+                            </button>
                           </div>
 
+                          {/* Logout */}
                           <button
                             onClick={() => {
                               logout();
                               navigate("/");
+                              setShowUserMenu(false);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-2"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 mt-2"
                           >
-                            <LogOut className="w-4 h-4" />
-                            <span>Logout</span>
+                            <div className="p-2 bg-red-100 rounded-lg">
+                              <LogOut className="w-4 h-4" />
+                            </div>
+                            <span className="font-semibold">Logout</span>
                           </button>
                         </div>
                       </motion.div>
@@ -337,6 +436,7 @@ const Navbar = () => {
               <div className="mt-6 pt-6 border-t border-white/20">
                 {user ? (
                   <div className="space-y-3">
+                    {/* User Info */}
                     <div className="flex items-center gap-3 px-4 py-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center">
                         <User className="w-5 h-5 text-white" />
@@ -359,16 +459,36 @@ const Navbar = () => {
                       </div>
                     </div>
 
+                    {/* Owner Dashboard - Mobile */}
                     {user?.role === "owner" && isOwner ? (
-                      <button
-                        onClick={() => {
-                          handleLinkClick(`/owner`);
-                          setIsOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
-                      >
-                        <span>Owner Dashboard</span>
-                      </button>
+                      <div className="space-y-1">
+                        <div className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-yellow-500" />
+                            <span className="text-xs font-semibold text-gray-500 uppercase">
+                              Owner Dashboard
+                            </span>
+                          </div>
+                        </div>
+                        {ownerMenuItems.slice(0, 4).map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              handleLinkClick(item.path);
+                              setIsOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-colors ${
+                              isHomePage
+                                ? "hover:bg-white/10 text-white"
+                                : "hover:bg-orange-50 text-gray-900"
+                            }`}
+                          >
+                            <div className="text-orange-500">{item.icon}</div>
+                            <span>{item.label}</span>
+                          </button>
+                        ))}
+                        <div className="h-px bg-white/10 mx-4 my-1"></div>
+                      </div>
                     ) : (
                       <button
                         onClick={() => {
@@ -378,20 +498,58 @@ const Navbar = () => {
                         className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-colors ${
                           isHomePage
                             ? "hover:bg-white/10 text-white"
-                            : "hover:bg-gray-100 text-gray-900"
+                            : "hover:bg-orange-50 text-gray-900"
                         }`}
                       >
-                        <List className="w-5 h-5" />
-                        <span>List Your Bike</span>
+                        <Key className="w-5 h-5 text-orange-500" />
+                        <div>
+                          <span className="font-medium">List Your Bike</span>
+                          <p className="text-xs text-gray-500">
+                            Start earning today
+                          </p>
+                        </div>
                       </button>
                     )}
 
+                    {/* Renter Tools - Mobile */}
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => {
+                          handleLinkClick(`/bookings`);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-colors ${
+                          isHomePage
+                            ? "hover:bg-white/10 text-white"
+                            : "hover:bg-blue-50 text-gray-900"
+                        }`}
+                      >
+                        <ClipboardCheck className="w-5 h-5 text-blue-500" />
+                        <span>My Bookings</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleLinkClick(`/favorite`);
+                          setIsOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-colors ${
+                          isHomePage
+                            ? "hover:bg-white/10 text-white"
+                            : "hover:bg-pink-50 text-gray-900"
+                        }`}
+                      >
+                        <Heart className="w-5 h-5 text-pink-500" />
+                        <span>Favorites</span>
+                      </button>
+                    </div>
+
+                    {/* Logout */}
                     <button
                       onClick={() => {
                         logout();
                         setIsOpen(false);
                       }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-500 hover:bg-red-500/10 rounded-xl transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-500 hover:bg-red-500/10 rounded-xl transition-colors mt-2"
                     >
                       <LogOut className="w-5 h-5" />
                       <span>Logout</span>
