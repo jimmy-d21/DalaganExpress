@@ -182,26 +182,10 @@ const AppProvider = ({ children }) => {
 
     // Motor Related
     motors,
+    setMotors,
     fetchMotors,
     allBookings,
     fetchAllBookings,
-
-    // Global Search State
-    globalSearchQuery,
-    setGlobalSearchQuery,
-    globalPickupLocation,
-    setGlobalPickupLocation,
-    globalPickupDate,
-    setGlobalPickupDate,
-    globalReturnDate,
-    setGlobalReturnDate,
-    globalBikeType,
-    setGlobalBikeType,
-    globalSearchMode,
-    setGlobalSearchMode,
-    resetGlobalSearch,
-    setAdvancedSearch,
-    setSimpleSearch,
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

@@ -109,8 +109,8 @@ export const ownerMenuLinks = [
     coloredIcon: addIconColored,
   },
   {
-    name: "Manage Cars",
-    path: "/owner/manage-cars",
+    name: "Manage Motors",
+    path: "/owner/manage-motors",
     icon: carIcon,
     coloredIcon: carIconColored,
   },

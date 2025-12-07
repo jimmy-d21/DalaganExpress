@@ -15,9 +15,9 @@ const ownerMotorRouter = express.Router();
 
 ownerMotorRouter.post("/change-role", protect, changeRoleToOwner);
 ownerMotorRouter.post("/add-motor", upload.single("image"), protect, addMotor);
-ownerMotorRouter.get("/cars", protect, getOwnerMotors);
-ownerMotorRouter.post("/toggle-car", protect, toggleMotorAvailability);
-ownerMotorRouter.post("/delete-car", protect, deleteMotor);
+ownerMotorRouter.get("/motors", protect, getOwnerMotors);
+ownerMotorRouter.post("/toggle-motor", protect, toggleMotorAvailability);
+ownerMotorRouter.post("/delete-motor", protect, deleteMotor);
 ownerMotorRouter.get("/dashboard", protect, getDashboardData);
 ownerMotorRouter.post(
   "/update-image",
