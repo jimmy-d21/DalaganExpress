@@ -27,6 +27,24 @@ const AppProvider = ({ children }) => {
   const [motors, setMotors] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
 
+  // Global Search State
+  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
+  const [globalPickupLocation, setGlobalPickupLocation] = useState("");
+  const [globalPickupDate, setGlobalPickupDate] = useState("");
+  const [globalReturnDate, setGlobalReturnDate] = useState("");
+  const [globalBikeType, setGlobalBikeType] = useState("");
+  const [globalSearchMode, setGlobalSearchMode] = useState("simple"); // 'simple' for navbar search, 'advanced' for hero search
+
+  // Function to reset global search
+  const resetGlobalSearch = () => {
+    setGlobalSearchQuery("");
+    setGlobalPickupLocation("");
+    setGlobalPickupDate("");
+    setGlobalReturnDate("");
+    setGlobalBikeType("");
+    setGlobalSearchMode("simple");
+  };
+
   // Function to check user is logged in
   const fetchUser = async () => {
     try {
@@ -95,9 +113,31 @@ const AppProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsOwner(false);
+    resetGlobalSearch(); // Reset search on logout
     navigate("/");
     axios.defaults.headers.common["Authorization"] = "";
     toast.success("You have been logged out");
+  };
+
+  // Function to set advanced search from Hero component
+  const setAdvancedSearch = (location, pickupDate, returnDate, bikeType) => {
+    setGlobalPickupLocation(location);
+    setGlobalPickupDate(pickupDate);
+    setGlobalReturnDate(returnDate);
+    setGlobalBikeType(bikeType);
+    setGlobalSearchMode("advanced");
+    setGlobalSearchQuery(""); // Clear simple search if advanced is used
+  };
+
+  // Function to set simple search from Navbar
+  const setSimpleSearch = (query) => {
+    setGlobalSearchQuery(query);
+    setGlobalSearchMode("simple");
+    // Reset advanced search if simple search is used
+    setGlobalPickupLocation("");
+    setGlobalPickupDate("");
+    setGlobalReturnDate("");
+    setGlobalBikeType("");
   };
 
   // useEffect to retrieve the token from localStorage
@@ -145,6 +185,23 @@ const AppProvider = ({ children }) => {
     fetchMotors,
     allBookings,
     fetchAllBookings,
+
+    // Global Search State
+    globalSearchQuery,
+    setGlobalSearchQuery,
+    globalPickupLocation,
+    setGlobalPickupLocation,
+    globalPickupDate,
+    setGlobalPickupDate,
+    globalReturnDate,
+    setGlobalReturnDate,
+    globalBikeType,
+    setGlobalBikeType,
+    globalSearchMode,
+    setGlobalSearchMode,
+    resetGlobalSearch,
+    setAdvancedSearch,
+    setSimpleSearch,
   };
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

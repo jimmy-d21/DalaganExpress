@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MotorCard from "../components/MotorCard";
 import { useAppContext } from "../context/AppContext";
-import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import {
@@ -17,23 +16,33 @@ import {
   Sparkles,
   Wind,
   Zap,
+  X,
 } from "lucide-react";
 
 const Motors = () => {
-  // Getting search params from URL
-  const [searchParams] = useSearchParams();
-  const pickupLocation = searchParams.get("pickupLocation");
-  const pickupDate = searchParams.get("pickupDate");
-  const returnDate = searchParams.get("returnDate");
+  const {
+    motors,
+    axios,
+    globalSearchQuery,
+    globalPickupLocation,
+    globalPickupDate,
+    globalReturnDate,
+    globalBikeType,
+    globalSearchMode,
+    resetGlobalSearch,
+  } = useAppContext();
 
-  const { motors, axios } = useAppContext();
-
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(globalSearchQuery || "");
   const [filteredMotors, setFilteredMotors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [localBikeType, setLocalBikeType] = useState(globalBikeType || "");
 
-  const isSearchData = pickupLocation && pickupDate && returnDate;
+  // Check if we have global search data
+  const isGlobalSearch =
+    globalSearchMode === "simple" && globalSearchQuery.trim() !== "";
+  const isGlobalAdvancedSearch =
+    globalSearchMode === "advanced" && globalPickupLocation;
 
   // Motorcycle types and categories
   const motorTypes = [
@@ -53,10 +62,12 @@ const Motors = () => {
 
     let filtered = [...motors]; // Create a copy of all motors
 
-    // Apply text search filter
-    if (input.trim() !== "") {
+    // Apply text search from global or local
+    const searchTerm =
+      input.toLowerCase() ||
+      (isGlobalSearch ? globalSearchQuery.toLowerCase() : "");
+    if (searchTerm.trim() !== "") {
       filtered = filtered.filter((motor) => {
-        const searchTerm = input.toLowerCase();
         return (
           motor.brand?.toLowerCase().includes(searchTerm) ||
           motor.model?.toLowerCase().includes(searchTerm) ||
@@ -96,75 +107,76 @@ const Motors = () => {
       });
     }
 
+    // Apply bike type filter from global or local
+    const currentBikeType = localBikeType || globalBikeType;
+    if (currentBikeType && currentBikeType.trim() !== "") {
+      filtered = filtered.filter((motor) => {
+        const motorCategory = motor.category?.toLowerCase();
+        const searchBikeType = currentBikeType.toLowerCase();
+
+        return (
+          motorCategory?.includes(searchBikeType) ||
+          motor.brand?.toLowerCase().includes(searchBikeType) ||
+          motor.model?.toLowerCase().includes(searchBikeType)
+        );
+      });
+    }
+
     setFilteredMotors(filtered);
     setIsLoading(false);
   };
 
-  const searchMotorAvailability = async () => {
-    try {
-      setIsLoading(true);
-      const { data } = await axios.post(
-        "/api/bookings/motorcycle/check-availability",
-        {
-          location: pickupLocation,
-          pickupDate,
-          returnDate,
-        }
-      );
+  useEffect(() => {
+    // Initialize local state with global search values
+    if (globalSearchMode === "simple" && globalSearchQuery) {
+      setInput(globalSearchQuery);
+    } else if (globalSearchMode === "advanced") {
+      setLocalBikeType(globalBikeType || "");
+    }
 
-      if (data.success) {
-        setFilteredMotors(data.availableMotors);
-        if (data.availableMotors.length === 0) {
-          toast("No motorcycles available for your selected criteria");
-        }
-      }
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to check availability"
-      );
-    } finally {
+    // Apply filters initially
+    setIsLoading(true);
+
+    // Check if motors data is available
+    if (motors && motors.length > 0) {
+      setFilteredMotors(motors);
       setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isSearchData) {
-      searchMotorAvailability();
     } else {
-      setIsLoading(true);
+      const timer = setTimeout(() => {
+        if (motors && motors.length === 0) {
+          setFilteredMotors([]);
+          setIsLoading(false);
+        }
+      }, 2000);
 
-      // Check if motors data is available
-      if (motors && motors.length > 0) {
-        setFilteredMotors(motors);
-        setIsLoading(false);
-      } else {
-        // If motors is empty, keep loading or show empty state
-        const timer = setTimeout(() => {
-          if (motors && motors.length === 0) {
-            // Motors data is loaded but empty
-            setFilteredMotors([]);
-            setIsLoading(false);
-          }
-        }, 2000);
-
-        return () => clearTimeout(timer);
-      }
+      return () => clearTimeout(timer);
     }
-  }, [isSearchData, motors]);
+  }, []);
 
   useEffect(() => {
-    // Only apply filter if we have motors data AND we're not in search mode
-    if (!isSearchData && motors && motors.length > 0) {
+    // Apply filter if we have motors data
+    if (motors && motors.length > 0) {
       applyFilter();
     }
-  }, [input, motors, activeFilter, isSearchData]);
+  }, [input, motors, activeFilter, localBikeType]);
 
   // Reset to show all motors when clearing search
   const clearFilters = () => {
     setInput("");
     setActiveFilter("all");
+    setLocalBikeType("");
+    resetGlobalSearch(); // Reset global search too
+
     if (motors && motors.length > 0) {
-      setFilteredMotors(motors); // Show all motors immediately
+      setFilteredMotors(motors);
+    }
+  };
+
+  // Handle text search from this page
+  const handleTextSearch = (e) => {
+    e.preventDefault();
+    if (input.trim()) {
+      applyFilter();
     }
   };
 
@@ -198,20 +210,32 @@ const Motors = () => {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Ride Your{" "}
-              <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">
-                Dream Motorcycle
-              </span>
+              {isGlobalSearch ? (
+                <>
+                  Search Results for{" "}
+                  <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">
+                    "{globalSearchQuery}"
+                  </span>
+                </>
+              ) : (
+                <>
+                  Explore Our{" "}
+                  <span className="bg-gradient-to-r from-red-400 to-orange-300 bg-clip-text text-transparent">
+                    Premium Motorcycle Collection
+                  </span>
+                </>
+              )}
             </h1>
 
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Explore Negros Island with our premium selection of motorcycles,
-              from scooters to powerful big bikes
+              {isGlobalSearch
+                ? "Find the perfect motorcycle for your needs"
+                : "Discover the perfect ride for your Negros adventure. From scooters for city commuting to powerful big bikes for long journeys."}
             </p>
           </motion.div>
 
           {/* Search Stats */}
-          {isSearchData && (
+          {isGlobalSearch && (
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -222,34 +246,22 @@ const Motors = () => {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl">
-                      <MapPin className="w-5 h-5 text-orange-400" />
+                      <Search className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-300">Pickup Location</p>
-                      <p className="font-semibold">{pickupLocation}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl">
-                      <Calendar className="w-5 h-5 text-orange-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-300">Rental Period</p>
-                      <p className="font-semibold">
-                        {pickupDate} - {returnDate}
-                      </p>
+                      <p className="text-sm text-gray-300">Search Term</p>
+                      <p className="font-semibold">"{globalSearchQuery}"</p>
                     </div>
                   </div>
 
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => window.history.back()}
+                    onClick={clearFilters}
                     className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-100 text-red-700 font-semibold rounded-xl transition-all"
                   >
-                    <Navigation className="w-4 h-4" />
-                    Modify Search
+                    <X className="w-4 h-4" />
+                    Clear Search
                   </motion.button>
                 </div>
               </div>
@@ -267,20 +279,22 @@ const Motors = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="max-w-6xl mx-auto mb-12"
         >
-          {/* Search Bar */}
+          {/* Text Search Bar */}
           <div className="relative mb-8">
-            <div className="relative">
-              <input
-                onChange={(e) => setInput(e.target.value)}
-                value={input}
-                type="text"
-                placeholder="Search by brand, model, engine size, or location..."
-                className="w-full pl-14 pr-12 py-4 bg-white border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-lg transition-all"
-                disabled={showLoading}
-              />
-              <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Filter className="absolute right-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
+            <form onSubmit={handleTextSearch}>
+              <div className="relative">
+                <input
+                  onChange={(e) => setInput(e.target.value)}
+                  value={input}
+                  type="text"
+                  placeholder="Search motorcycles by brand, model, or features..."
+                  className="w-full pl-14 pr-12 py-4 bg-white border border-gray-300 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-lg transition-all"
+                  disabled={showLoading}
+                />
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Filter className="absolute right-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              </div>
+            </form>
           </div>
 
           {/* Filter Chips */}
@@ -375,7 +389,9 @@ const Motors = () => {
             )}
 
             {/* Clear Filters Button */}
-            {(input.trim() !== "" || activeFilter !== "all") && (
+            {(input.trim() !== "" ||
+              activeFilter !== "all" ||
+              localBikeType) && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -385,7 +401,7 @@ const Motors = () => {
                 disabled={showLoading}
                 className="px-6 py-3 rounded-full font-medium bg-red-100 text-red-700 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               >
-                Clear All
+                Clear All Filters
               </motion.button>
             )}
           </div>
@@ -416,13 +432,18 @@ const Motors = () => {
                     </span>{" "}
                     motorcycles
                   </p>
-                  {activeFilter !== "all" && (
+                  {isGlobalSearch && (
+                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                      Search: "{globalSearchQuery}"
+                    </span>
+                  )}
+                  {activeFilter !== "all" && !isGlobalSearch && (
                     <span className="px-2 py-1 bg-gradient-to-r from-red-50 to-orange-50 text-red-700 rounded-full text-sm font-medium">
                       {activeFilter.charAt(0).toUpperCase() +
                         activeFilter.slice(1)}
                     </span>
                   )}
-                  {input.trim() !== "" && (
+                  {input.trim() !== "" && !isGlobalSearch && (
                     <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
                       "{input}"
                     </span>
@@ -431,7 +452,7 @@ const Motors = () => {
               )}
             </div>
 
-            {!isSearchData && !showLoading && motors && motors.length > 0 && (
+            {!showLoading && motors && motors.length > 0 && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Gauge className="w-4 h-4 text-red-500" />
@@ -500,7 +521,9 @@ const Motors = () => {
               No Motorcycles Found
             </h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              {input
+              {isGlobalSearch
+                ? `No motorcycles match your search for "${globalSearchQuery}"`
+                : input
                 ? `No motorcycles match your search for "${input}"`
                 : activeFilter !== "all"
                 ? `No ${activeFilter} motorcycles available`
@@ -509,7 +532,9 @@ const Motors = () => {
                 : "No motorcycles match your criteria"}
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              {(input.trim() !== "" || activeFilter !== "all") && (
+              {(input.trim() !== "" ||
+                activeFilter !== "all" ||
+                isGlobalSearch) && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}

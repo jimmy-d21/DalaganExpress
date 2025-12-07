@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { assets, menuLinks } from "../assets/assets";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
@@ -7,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Menu,
   X,
-  Search,
   User,
   LogOut,
   List,
@@ -15,6 +13,7 @@ import {
   ChevronDown,
   Heart,
 } from "lucide-react";
+import { menuLinks } from "../assets/assets";
 
 const Navbar = () => {
   const {
@@ -31,7 +30,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const isHomePage = location.pathname === "/";
 
@@ -49,19 +47,8 @@ const Navbar = () => {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/motors?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
-      setIsOpen(false);
-    }
-  };
-
   const handleLinkClick = (path) => {
-    // Navigate to the route
     navigate(path);
-    // Scroll to top after navigation
     setTimeout(() => {
       window.scrollTo({
         top: 0,
@@ -116,7 +103,7 @@ const Navbar = () => {
                 <span className={`text-2xl font-semibold text-blue-800 -mb-1`}>
                   Dalagan
                 </span>
-                <span className="text-lg font-semibold text-yellow-300 ">
+                <span className="text-lg font-semibold text-yellow-300">
                   Express
                 </span>
               </div>
@@ -166,32 +153,6 @@ const Navbar = () => {
                 </motion.div>
               ))}
             </div>
-
-            {/* Search Bar */}
-            <motion.form
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              onSubmit={handleSearch}
-              className="relative"
-            >
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search motorcycles..."
-                className={`pl-12 pr-4 py-2.5 rounded-full text-sm w-64 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all ${
-                  isHomePage
-                    ? "bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:bg-white/20"
-                    : "bg-gray-100 text-gray-900 placeholder-gray-500 border border-gray-200 focus:bg-white"
-                }`}
-              />
-              <Search
-                className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                  isHomePage ? "text-gray-400" : "text-gray-500"
-                }`}
-              />
-            </motion.form>
 
             {/* User Actions */}
             <div className="flex items-center gap-4">
@@ -338,34 +299,6 @@ const Navbar = () => {
             }`}
           >
             <div className="container mx-auto px-4 py-6">
-              {/* Mobile Search */}
-              <motion.form
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                onSubmit={handleSearch}
-                className="mb-6"
-              >
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search motorcycles..."
-                    className={`w-full pl-12 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                      isHomePage
-                        ? "bg-white/10 text-white placeholder-gray-400 border border-white/20"
-                        : "bg-gray-100 text-gray-900 placeholder-gray-500 border border-gray-200"
-                    }`}
-                  />
-                  <Search
-                    className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                      isHomePage ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
-                </div>
-              </motion.form>
-
               {/* Mobile Links */}
               <div className="space-y-2">
                 {menuLinks.map((link, index) => (
