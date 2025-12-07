@@ -15,6 +15,7 @@ import {
   Users,
   Gauge,
   Wind,
+  Motorbike,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -79,7 +80,7 @@ const Hero = () => {
         >
           <div className="flex items-center gap-2">
             <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
-              <Bike className="w-6 h-6 text-white" />
+              <Motorbike className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-blue-800">Dalagan</span>
             <span className="text-2xl font-bold text-yellow-300">Express</span>

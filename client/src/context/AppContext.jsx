@@ -119,27 +119,6 @@ const AppProvider = ({ children }) => {
     toast.success("You have been logged out");
   };
 
-  // Function to set advanced search from Hero component
-  const setAdvancedSearch = (location, pickupDate, returnDate, bikeType) => {
-    setGlobalPickupLocation(location);
-    setGlobalPickupDate(pickupDate);
-    setGlobalReturnDate(returnDate);
-    setGlobalBikeType(bikeType);
-    setGlobalSearchMode("advanced");
-    setGlobalSearchQuery(""); // Clear simple search if advanced is used
-  };
-
-  // Function to set simple search from Navbar
-  const setSimpleSearch = (query) => {
-    setGlobalSearchQuery(query);
-    setGlobalSearchMode("simple");
-    // Reset advanced search if simple search is used
-    setGlobalPickupLocation("");
-    setGlobalPickupDate("");
-    setGlobalReturnDate("");
-    setGlobalBikeType("");
-  };
-
   // useEffect to retrieve the token from localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");

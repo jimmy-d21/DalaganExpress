@@ -347,7 +347,7 @@ export const getOwnerBookings = async (req, res) => {
   }
 };
 
-// API to change booking status
+// API to change booking status for motorcycles
 export const changeBookingStatus = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -361,7 +361,7 @@ export const changeBookingStatus = async (req, res) => {
       });
     }
 
-    // Find the booking and populate car details
+    // Find the booking and populate motorcycle details
     const booking = await Booking.findById(bookingId).populate("motor");
 
     if (!booking) {
@@ -375,7 +375,8 @@ export const changeBookingStatus = async (req, res) => {
     if (booking.owner.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized: Only motor owner can change booking status",
+        message:
+          "Unauthorized: Only motorcycle owner can change booking status",
       });
     }
 
@@ -388,42 +389,41 @@ export const changeBookingStatus = async (req, res) => {
       });
     }
 
-    // Update motor availability based on status
+    // Update motorcycle availability based on status
     const motor = await Motor.findById(booking.motor._id);
 
     if (!motor) {
       return res.status(404).json({
         success: false,
-        message: "Motor not found",
+        message: "Motorcycle not found",
       });
     }
 
-    // Update car availability
+    // Update motorcycle availability
     if (status === "cancelled" || status === "completed") {
       motor.isAvailable = true;
     } else if (status === "confirmed") {
       motor.isAvailable = false;
     }
-    // Note: "pending" status doesn't change car availability
+    // Note: "pending" status doesn't change motorcycle availability
 
-    // Save car availability changes
+    // Save motorcycle availability changes
     await motor.save();
 
     // Update booking status
     booking.status = status;
+    booking.updatedAt = new Date();
     await booking.save();
+
+    // Populate the updated booking
+    const updatedBooking = await Booking.findById(bookingId)
+      .populate("motor")
+      .populate("user", "name email");
 
     res.json({
       success: true,
       message: "Booking status updated successfully",
-      booking: {
-        id: booking._id,
-        status: booking.status,
-        motor: {
-          id: motor._id,
-          isAvaliable: motor.isAvailable,
-        },
-      },
+      booking: updatedBooking,
     });
   } catch (error) {
     console.error("Error in changeBookingStatus controller:", error);

@@ -17,6 +17,7 @@ import {
   Disc,
   Sparkles,
   AlertCircle,
+  Motorbike,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -276,7 +277,7 @@ const MotorCard = ({ motor }) => {
           {/* Transmission */}
           <div className="flex items-center gap-2 p-2.5 bg-gray-800/50 rounded-lg hover:bg-gray-800/70 transition-colors duration-300">
             <div className="p-1.5 bg-gray-700/50 rounded">
-              <Bike className="w-3.5 h-3.5 text-purple-400" />
+              <Motorbike className="w-3.5 h-3.5 text-purple-400" />
             </div>
             <div>
               <div className="text-xs text-gray-400">Transmission</div>

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Car,
   Calendar,
   Clock,
   CheckCircle,
@@ -14,7 +13,6 @@ import {
   Shield,
   MapPin,
   Filter,
-  MoreVertical,
   Activity,
   TrendingDown,
   Award,
@@ -27,9 +25,6 @@ import {
   Plus,
   Zap,
   Sparkles,
-  CreditCard,
-  Banknote,
-  Wallet,
   Motorbike,
 } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
@@ -41,18 +36,18 @@ const Dashboard = () => {
   const { axios, currency, isOwner, user } = useAppContext();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalCars: 0,
+  const [dashboardData, setDashboardData] = useState({
+    totalMotors: 0,
     totalBookings: 0,
     pendingBookings: 0,
     completedBookings: 0,
     activeBookings: 0,
     monthlyRevenue: 0,
-    revenueChange: 12.5,
+    revenueChange: 0,
     totalEarnings: 0,
-    averageRating: 4.8,
+    averageRating: 0,
     recentBookings: [],
-    popularCars: [],
+    popularMotors: [],
     monthlyBookings: [],
   });
 
@@ -62,7 +57,7 @@ const Dashboard = () => {
   const dashboardCards = [
     {
       title: "Total Motorcycles",
-      value: stats?.totalCars,
+      value: dashboardData?.totalMotors || 0,
       icon: <Motorbike className="w-5 h-5" />,
       color: "from-blue-500 to-blue-600",
       change: "+2 this month",
@@ -72,7 +67,7 @@ const Dashboard = () => {
     },
     {
       title: "Total Bookings",
-      value: stats?.totalBookings,
+      value: dashboardData?.totalBookings || 0,
       icon: <Calendar className="w-5 h-5" />,
       color: "from-purple-500 to-purple-600",
       change: "+15% from last month",
@@ -82,7 +77,7 @@ const Dashboard = () => {
     },
     {
       title: "Pending Bookings",
-      value: stats?.pendingBookings,
+      value: dashboardData?.pendingBookings || 0,
       icon: <Clock className="w-5 h-5" />,
       color: "from-amber-500 to-amber-600",
       change: "Awaiting approval",
@@ -91,7 +86,7 @@ const Dashboard = () => {
     },
     {
       title: "Active Bookings",
-      value: stats?.activeBookings,
+      value: dashboardData?.activeBookings || 0,
       icon: <Activity className="w-5 h-5" />,
       color: "from-emerald-500 to-emerald-600",
       change: "Currently running",
@@ -101,7 +96,7 @@ const Dashboard = () => {
     },
     {
       title: "Completed",
-      value: stats?.completedBookings,
+      value: dashboardData?.completedBookings || 0,
       icon: <CheckCircle className="w-5 h-5" />,
       color: "from-indigo-500 to-indigo-600",
       change: "+8 this month",
@@ -111,12 +106,14 @@ const Dashboard = () => {
     },
     {
       title: "Total Earnings",
-      value: `${currency}${stats?.totalEarnings?.toLocaleString()}`,
+      value: `${currency}${(
+        dashboardData?.totalEarnings || 0
+      ).toLocaleString()}`,
       icon: <DollarSign className="w-5 h-5" />,
       color: "from-green-500 to-green-600",
-      change: "+12.5% from last month",
-      trend: "up",
-      percentage: "12.5%",
+      change: `+${dashboardData?.revenueChange || 0}% from last month`,
+      trend: dashboardData?.revenueChange > 0 ? "up" : "down",
+      percentage: `${dashboardData?.revenueChange || 0}%`,
       description: "Lifetime revenue",
     },
   ];
@@ -126,12 +123,43 @@ const Dashboard = () => {
     try {
       const { data } = await axios.get("/api/motor/owner/dashboard");
       if (data.success) {
-        setStats(data.dashboardData);
+        setDashboardData(
+          data.dashboardData || {
+            totalMotors: 0,
+            totalBookings: 0,
+            pendingBookings: 0,
+            completedBookings: 0,
+            activeBookings: 0,
+            monthlyRevenue: 0,
+            revenueChange: 0,
+            totalEarnings: 0,
+            averageRating: 0,
+            recentBookings: [],
+            popularMotors: [],
+            monthlyBookings: [],
+          }
+        );
       }
     } catch (error) {
+      console.error("Dashboard error:", error);
       toast.error(
         error.response?.data?.message || "Failed to load dashboard data"
       );
+      // Set default data on error
+      setDashboardData({
+        totalMotors: 0,
+        totalBookings: 0,
+        pendingBookings: 0,
+        completedBookings: 0,
+        activeBookings: 0,
+        monthlyRevenue: 0,
+        revenueChange: 0,
+        totalEarnings: 0,
+        averageRating: 4.8,
+        recentBookings: [],
+        popularMotors: [],
+        monthlyBookings: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -142,32 +170,49 @@ const Dashboard = () => {
     try {
       const { data } = await axios.get("/api/motor/bookings/owner");
       if (data.success) {
-        setOwnerBookings(data.bookings);
+        setOwnerBookings(data.bookings || []);
       }
     } catch (error) {
+      console.error("Bookings error:", error);
       toast.error(error.response?.data?.message || "Failed to load bookings");
+      setOwnerBookings([]);
     }
   };
 
   // Function to calculate number of days between dates
   const calculateDays = (pickupDate, returnDate) => {
     if (!pickupDate || !returnDate) return 1;
-    const start = new Date(pickupDate);
-    const end = new Date(returnDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays || 1;
+    try {
+      const start = new Date(pickupDate);
+      const end = new Date(returnDate);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays || 1;
+    } catch (error) {
+      return 1;
+    }
   };
 
   // Function to calculate booking amount
   const calculateBookingAmount = (booking) => {
-    if (booking.price) return booking.price;
-    if (booking.totalAmount) return booking.totalAmount;
-    if (booking.motor?.pricePerDay) {
-      const days = calculateDays(booking.pickupDate, booking.returnDate);
-      return booking.motor.pricePerDay * days;
+    try {
+      // Try totalPrice first (from Booking model)
+      if (booking.totalPrice !== undefined) return Number(booking.totalPrice);
+
+      // Try price (for backward compatibility)
+      if (booking.price !== undefined) return Number(booking.price);
+
+      // Calculate from motor price per day
+      if (booking.motor?.pricePerDay) {
+        const days = calculateDays(booking.pickupDate, booking.returnDate);
+        return Number(booking.motor.pricePerDay) * days;
+      }
+
+      return 0;
+    } catch (error) {
+      console.error("Error calculating booking amount:", error);
+      return 0;
     }
-    return 0;
   };
 
   useEffect(() => {
@@ -379,12 +424,12 @@ const Dashboard = () => {
             <div className="relative">
               {/* Chart bars */}
               <div className="flex items-end justify-between h-48 mb-8">
-                {stats?.monthlyBookings?.map((month, index) => (
+                {dashboardData?.monthlyBookings?.map((month, index) => (
                   <motion.div
                     key={index}
                     initial={{ height: 0 }}
                     animate={{
-                      height: `${Math.min(100, month.bookings * 10)}%`,
+                      height: `${Math.min(100, (month.bookings || 0) * 10)}%`,
                     }}
                     transition={{ duration: 1, delay: index * 0.1 }}
                     className="flex flex-col items-center"
@@ -392,11 +437,13 @@ const Dashboard = () => {
                     <div className="w-12 bg-gradient-to-t from-blue-500 to-blue-600 rounded-t-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 cursor-pointer group relative">
                       <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
                         {currency}
-                        {Math.round(month.bookings * 1500).toLocaleString()}
+                        {Math.round(
+                          (month.bookings || 0) * 1500
+                        ).toLocaleString()}
                       </div>
                     </div>
                     <span className="mt-3 text-sm text-gray-500 font-medium">
-                      {month.month}
+                      {month.month || `Month ${index + 1}`}
                     </span>
                   </motion.div>
                 ))}
@@ -410,13 +457,24 @@ const Dashboard = () => {
                       <p className="text-sm text-gray-600">Monthly Revenue</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
                         {currency}
-                        {stats?.monthlyRevenue?.toLocaleString() || 0}
+                        {(dashboardData?.monthlyRevenue || 0).toLocaleString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-5 h-5" />
+                    <div
+                      className={`flex items-center gap-1 ${
+                        dashboardData?.revenueChange > 0
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {dashboardData?.revenueChange > 0 ? (
+                        <ArrowUpRight className="w-5 h-5" />
+                      ) : (
+                        <ArrowDownRight className="w-5 h-5" />
+                      )}
                       <span className="font-semibold">
-                        +{stats.revenueChange}%
+                        {dashboardData?.revenueChange > 0 ? "+" : ""}
+                        {(dashboardData?.revenueChange || 0).toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -426,7 +484,7 @@ const Dashboard = () => {
                     <div>
                       <p className="text-sm text-gray-600">Booking Growth</p>
                       <p className="text-2xl font-bold text-gray-900 mt-1">
-                        {stats?.monthlyBookings?.[5]?.bookings || 0}
+                        {dashboardData?.monthlyBookings?.[5]?.bookings || 0}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 text-green-600">
@@ -493,7 +551,7 @@ const Dashboard = () => {
 
                     return (
                       <motion.tr
-                        key={booking._id}
+                        key={booking._id || index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -580,11 +638,14 @@ const Dashboard = () => {
                             }`}
                           >
                             {booking.status?.charAt(0).toUpperCase() +
-                              booking.status?.slice(1) || "Unknown"}
+                              (booking.status?.slice(1) || "") || "Unknown"}
                           </span>
                         </td>
                         <td className="py-4 px-6">
-                          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <button
+                            onClick={() => navigate(`/owner/manage-bookings`)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
                         </td>
@@ -639,14 +700,16 @@ const Dashboard = () => {
                   <span className="text-gray-300">Customer Rating</span>
                   <span className="font-bold flex items-center gap-1">
                     <Star className="w-4 h-4 fill-current text-yellow-400" />
-                    {stats.averageRating}/5
+                    {(dashboardData?.averageRating || 4.8).toFixed(1)}/5
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">Utilization Rate</span>
                   <span className="font-bold">
                     {Math.round(
-                      (stats.activeBookings / (stats.totalCars || 1)) * 100
+                      ((dashboardData?.activeBookings || 0) /
+                        (dashboardData?.totalMotors || 1)) *
+                        100
                     )}
                     %
                   </span>
@@ -673,16 +736,16 @@ const Dashboard = () => {
             </div>
 
             <div className="space-y-4">
-              {stats?.popularCars?.slice(0, 3).map((motor, index) => (
+              {dashboardData?.popularMotors?.slice(0, 3).map((motor, index) => (
                 <div
-                  key={index}
+                  key={motor._id || index}
                   className="group p-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100/30 rounded-xl transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-100"
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <img
                         src={motor.image || "/placeholder-motor.jpg"}
-                        alt={motor.brand}
+                        alt={`${motor.brand || ""} ${motor.model || ""}`}
                         className="w-14 h-14 rounded-lg object-cover"
                         onError={(e) => {
                           e.target.src = "/placeholder-motor.jpg";
@@ -694,7 +757,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-gray-900 truncate">
-                        {motor.brand} {motor.model}
+                        {motor.brand || "Unknown"} {motor.model || ""}
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-sm text-gray-500">
@@ -702,7 +765,7 @@ const Dashboard = () => {
                         </span>
                         <span className="flex items-center gap-1 text-sm">
                           <Star className="w-3 h-3 fill-current text-yellow-400" />
-                          {motor.rating || 4.5}
+                          {(motor.rating || 4.5).toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -718,7 +781,10 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <button className="w-full mt-4 py-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600 font-medium rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group">
+            <button
+              onClick={() => navigate(`/owner/manage-motors`)}
+              className="w-full mt-4 py-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 text-blue-600 font-medium rounded-xl transition-all duration-300 flex items-center justify-center gap-2 group"
+            >
               <Plus className="w-4 h-4" />
               Add New Motorcycle
             </button>
@@ -756,7 +822,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-gray-900">
-                      {stats.totalCars}
+                      {dashboardData?.totalMotors || 0}
                     </div>
                     <div className="text-sm text-gray-600">Active Listings</div>
                   </div>
@@ -770,7 +836,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold text-gray-900">
-                      {Math.round(stats.averageRating * 20)}%
+                      {Math.round((dashboardData?.averageRating || 4.8) * 20)}%
                     </div>
                     <div className="text-sm text-gray-600">Satisfaction</div>
                   </div>
@@ -796,12 +862,18 @@ const Dashboard = () => {
       {/* Bottom Action Bar */}
       <div className="fixed bottom-6 right-6 z-10">
         <div className="flex items-center gap-3">
-          <button className="p-3 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow border border-gray-100">
+          <button
+            onClick={() => navigate(`/owner/manage-bookings`)}
+            className="p-3 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow border border-gray-100"
+          >
             <Filter className="w-5 h-5 text-gray-600" />
           </button>
-          <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2">
+          <button
+            onClick={() => navigate(`/owner/manage-motors`)}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" />
-            New Booking
+            New Motorcycle
           </button>
         </div>
       </div>

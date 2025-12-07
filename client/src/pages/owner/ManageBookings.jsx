@@ -6,7 +6,7 @@ import {
   CheckCircle,
   XCircle,
   User,
-  Car,
+  Bike,
   DollarSign,
   Filter,
   Search,
@@ -19,13 +19,17 @@ import {
   X,
   MapPin,
   FileText,
+  Gauge,
+  Wind,
+  Shield,
+  Zap,
 } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 import LoadingScreen from "../../components/LoadingScreen";
 
 const ManageBookings = () => {
-  const { axios, currency } = useAppContext();
+  const { axios, currency, isOwner } = useAppContext();
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,13 +50,13 @@ const ManageBookings = () => {
   const fetchOwnerBookings = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`/api/bookings/owner`);
+      const { data } = await axios.get(`/api/motor/bookings/owner`);
       if (data.success) {
         setBookings(data.bookings);
         setFilteredBookings(data.bookings);
       }
     } catch (error) {
-      toast.error("Failed to load bookings");
+      toast.error(error.response?.data?.message || "Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -61,7 +65,7 @@ const ManageBookings = () => {
   const changeBookingStatus = async (bookingId, status) => {
     setUpdating(true);
     try {
-      const { data } = await axios.post(`/api/bookings/change-status`, {
+      const { data } = await axios.post(`/api/motor/bookings/change-status`, {
         bookingId,
         status,
       });
@@ -75,7 +79,9 @@ const ManageBookings = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error("Failed to update booking status");
+      toast.error(
+        error.response?.data?.message || "Failed to update booking status"
+      );
     } finally {
       setUpdating(false);
     }
@@ -107,8 +113,8 @@ const ManageBookings = () => {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (booking) =>
-          booking.car?.brand?.toLowerCase().includes(term) ||
-          booking.car?.model?.toLowerCase().includes(term) ||
+          booking.motor?.brand?.toLowerCase().includes(term) ||
+          booking.motor?.model?.toLowerCase().includes(term) ||
           booking.user?.name?.toLowerCase().includes(term) ||
           booking.status?.toLowerCase().includes(term)
       );
@@ -147,16 +153,31 @@ const ManageBookings = () => {
     }
   };
 
+  // Calculate days from booking dates
   const calculateDays = (pickupDate, returnDate) => {
+    if (!pickupDate || !returnDate) return 1;
     const pickup = new Date(pickupDate);
     const returnD = new Date(returnDate);
     const diffTime = Math.abs(returnD - pickup);
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  // Calculate total price
+  const calculateTotalPrice = (booking) => {
+    if (booking.totalPrice) return booking.totalPrice;
+    if (booking.price) return booking.price;
+    if (booking.motor?.pricePerDay) {
+      const days = calculateDays(booking.pickupDate, booking.returnDate);
+      return booking.motor.pricePerDay * days;
+    }
+    return 0;
+  };
+
   useEffect(() => {
-    fetchOwnerBookings();
-  }, []);
+    if (isOwner) {
+      fetchOwnerBookings();
+    }
+  }, [isOwner]);
 
   if (loading) return <LoadingScreen />;
 
@@ -168,7 +189,7 @@ const ManageBookings = () => {
     completed: bookings.filter((b) => b.status === "completed").length,
     revenue: bookings
       .filter((b) => b.status === "completed" || b.status === "confirmed")
-      .reduce((sum, booking) => sum + booking.price, 0),
+      .reduce((sum, booking) => sum + calculateTotalPrice(booking), 0),
   };
 
   return (
@@ -183,17 +204,17 @@ const ManageBookings = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Manage Bookings
+              Manage Motorcycle Bookings
             </h1>
             <p className="text-gray-600 mt-2">
               Track all customer bookings, approve or cancel requests, and
-              manage booking statuses.
+              manage booking statuses for your motorcycles.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchOwnerBookings}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2"
+              className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2"
             >
               <Calendar className="w-4 h-4" />
               Refresh Bookings
@@ -266,7 +287,7 @@ const ManageBookings = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search bookings by car, customer, or status..."
+                placeholder="Search bookings by motorcycle, customer, or status..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -301,7 +322,7 @@ const ManageBookings = () => {
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer & Car
+                    Customer & Motorcycle
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Booking Details
@@ -318,132 +339,148 @@ const ManageBookings = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredBookings.map((booking, index) => (
-                  <motion.tr
-                    key={booking._id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={booking.car?.image}
-                          alt={`${booking.car?.brand} ${booking.car?.model}`}
-                          className="w-16 h-16 rounded-lg object-cover border border-gray-200"
-                        />
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {booking.car?.brand} {booking.car?.model}
-                          </div>
-                          <div className="text-sm text-gray-500 mt-1">
-                            <div className="flex items-center gap-2">
-                              <User className="w-3 h-3" />
-                              {booking.user?.name || "Customer"}
+                {filteredBookings.map((booking, index) => {
+                  const totalPrice = calculateTotalPrice(booking);
+                  const days = calculateDays(
+                    booking.pickupDate,
+                    booking.returnDate
+                  );
+
+                  return (
+                    <motion.tr
+                      key={booking._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={
+                              booking.motor?.image || "/placeholder-motor.jpg"
+                            }
+                            alt={`${booking.motor?.brand} ${booking.motor?.model}`}
+                            className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                            onError={(e) => {
+                              e.target.src = "/placeholder-motor.jpg";
+                            }}
+                          />
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {booking.motor?.brand} {booking.motor?.model}
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                              <div className="flex items-center gap-2">
+                                <User className="w-3 h-3" />
+                                {booking.user?.name || "Customer"}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium">
-                            {new Date(booking.pickupDate).toLocaleDateString()}
-                          </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="font-medium">
+                              {booking.pickupDate
+                                ? new Date(
+                                    booking.pickupDate
+                                  ).toLocaleDateString()
+                                : "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Clock className="w-4 h-4" />
+                            <span>
+                              to{" "}
+                              {booking.returnDate
+                                ? new Date(
+                                    booking.returnDate
+                                  ).toLocaleDateString()
+                                : "N/A"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {days} day{days !== 1 ? "s" : ""}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Clock className="w-4 h-4" />
-                          <span>
-                            to{" "}
-                            {new Date(booking.returnDate).toLocaleDateString()}
-                          </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900 text-lg">
+                          {currency}
+                          {totalPrice.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {calculateDays(
-                            booking.pickupDate,
-                            booking.returnDate
-                          )}{" "}
-                          days
+                        <div className="text-sm text-gray-500">
+                          {currency}
+                          {booking.motor?.pricePerDay || 0}/day
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900 text-lg">
-                        {currency}
-                        {booking.price}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {currency}
-                        {booking.car?.pricePerDay}/day
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(
-                          booking.status
-                        )}`}
-                      >
-                        {getStatusIcon(booking.status)}
-                        <span className="capitalize">{booking.status}</span>
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-2">
-                        {booking.status === "pending" ||
-                        booking.status === "confirmed" ? (
-                          <select
-                            onChange={(e) =>
-                              changeBookingStatus(booking._id, e.target.value)
-                            }
-                            value={booking.status}
-                            disabled={updating}
-                            className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="cancelled">Cancel</option>
-                            <option value="confirmed">Confirm</option>
-                            <option value="completed">Complete</option>
-                          </select>
-                        ) : (
-                          <span
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${getStatusColor(
-                              booking.status
-                            )}`}
-                          >
-                            {booking.status}
-                          </span>
-                        )}
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleQuickView(booking)}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
-                          >
-                            Quick View
-                          </button>
-                          <button
-                            onClick={() => {
-                              // Implement contact functionality
-                              if (booking.user?.email) {
-                                window.location.href = `mailto:${booking.user.email}`;
-                              } else {
-                                toast.error(
-                                  "No email available for this customer"
-                                );
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(
+                            booking.status
+                          )}`}
+                        >
+                          {getStatusIcon(booking.status)}
+                          <span className="capitalize">{booking.status}</span>
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col gap-2">
+                          {booking.status === "pending" ||
+                          booking.status === "confirmed" ? (
+                            <select
+                              onChange={(e) =>
+                                changeBookingStatus(booking._id, e.target.value)
                               }
-                            }}
-                            className="text-xs text-gray-500 hover:text-gray-700 font-medium"
-                          >
-                            Contact
-                          </button>
+                              value={booking.status}
+                              disabled={updating}
+                              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="cancelled">Cancel</option>
+                              <option value="confirmed">Confirm</option>
+                              <option value="completed">Complete</option>
+                            </select>
+                          ) : (
+                            <span
+                              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${getStatusColor(
+                                booking.status
+                              )}`}
+                            >
+                              {booking.status}
+                            </span>
+                          )}
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleQuickView(booking)}
+                              className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
+                            >
+                              Quick View
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (booking.user?.email) {
+                                  window.location.href = `mailto:${booking.user.email}`;
+                                } else {
+                                  toast.error(
+                                    "No email available for this customer"
+                                  );
+                                }
+                              }}
+                              className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                            >
+                              Contact
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
 
@@ -456,7 +493,7 @@ const ManageBookings = () => {
                 <p className="text-gray-500 max-w-md mx-auto">
                   {searchTerm || statusFilter !== "all"
                     ? "No bookings match your current filters. Try adjusting your search criteria."
-                    : "You don't have any bookings yet. When customers book your cars, they'll appear here."}
+                    : "You don't have any bookings yet. When customers book your motorcycles, they'll appear here."}
                 </p>
               </div>
             )}
@@ -522,44 +559,50 @@ const ManageBookings = () => {
 
               {/* Content */}
               <div className="p-6 space-y-6">
-                {/* Car Information */}
+                {/* Motorcycle Information */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Car Information
+                    Motorcycle Information
                   </h3>
                   <img
-                    src={selectedBooking.car?.image}
-                    alt={`${selectedBooking.car?.brand} ${selectedBooking.car?.model}`}
+                    src={
+                      selectedBooking.motor?.image || "/placeholder-motor.jpg"
+                    }
+                    alt={`${selectedBooking.motor?.brand} ${selectedBooking.motor?.model}`}
                     className="w-full h-48 object-cover rounded-lg mb-4"
+                    onError={(e) => {
+                      e.target.src = "/placeholder-motor.jpg";
+                    }}
                   />
                   <div className="space-y-2">
                     <h4 className="text-xl font-bold text-gray-900">
-                      {selectedBooking.car?.brand} {selectedBooking.car?.model}
+                      {selectedBooking.motor?.brand}{" "}
+                      {selectedBooking.motor?.model}
                     </h4>
-                    <p className="text-gray-600">{selectedBooking.car?.year}</p>
+                    <p className="text-gray-600">
+                      {selectedBooking.motor?.year}
+                    </p>
                     <div className="grid grid-cols-2 gap-3 mt-4">
                       <div className="flex items-center gap-2 text-sm">
-                        <Car className="w-4 h-4 text-gray-400" />
-                        <span>{selectedBooking.car?.category}</span>
+                        <Bike className="w-4 h-4 text-gray-400" />
+                        <span>{selectedBooking.motor?.category}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Settings className="w-4 h-4 text-gray-400" />
-                        <span>{selectedBooking.car?.transmission}</span>
+                        <span>{selectedBooking.motor?.transmission}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Fuel className="w-4 h-4 text-gray-400" />
-                        <span>{selectedBooking.car?.fuel_type}</span>
+                        <span>{selectedBooking.motor?.fuel_type}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span>
-                          {selectedBooking.car?.seating_capacity} seats
-                        </span>
+                        <Zap className="w-4 h-4 text-gray-400" />
+                        <span>{selectedBooking.motor?.engine_cc}cc</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 text-sm mt-2">
                       <MapPin className="w-4 h-4 text-gray-400" />
-                      <span>{selectedBooking.car?.location}</span>
+                      <span>{selectedBooking.motor?.location}</span>
                     </div>
                   </div>
                 </div>
@@ -616,18 +659,22 @@ const ManageBookings = () => {
                           <div>
                             <div className="text-sm text-gray-500">Pickup</div>
                             <div className="font-medium">
-                              {new Date(
-                                selectedBooking.pickupDate
-                              ).toLocaleDateString()}
+                              {selectedBooking.pickupDate
+                                ? new Date(
+                                    selectedBooking.pickupDate
+                                  ).toLocaleDateString()
+                                : "N/A"}
                             </div>
                           </div>
                           <div className="text-gray-400">→</div>
                           <div>
                             <div className="text-sm text-gray-500">Return</div>
                             <div className="font-medium">
-                              {new Date(
-                                selectedBooking.returnDate
-                              ).toLocaleDateString()}
+                              {selectedBooking.returnDate
+                                ? new Date(
+                                    selectedBooking.returnDate
+                                  ).toLocaleDateString()
+                                : "N/A"}
                             </div>
                           </div>
                         </div>
@@ -653,14 +700,21 @@ const ManageBookings = () => {
                           <span className="text-gray-600">Total Amount</span>
                           <span className="text-2xl font-bold text-gray-900">
                             {currency}
-                            {selectedBooking.price}
+                            {calculateTotalPrice(
+                              selectedBooking
+                            ).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-500">
                           <span>
                             {currency}
-                            {selectedBooking.car?.pricePerDay} ×{" "}
-                            {selectedBooking.noOfDays} days
+                            {selectedBooking.motor?.pricePerDay || 0} ×{" "}
+                            {selectedBooking.rentalDays ||
+                              calculateDays(
+                                selectedBooking.pickupDate,
+                                selectedBooking.returnDate
+                              )}{" "}
+                            days
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-500">
@@ -683,9 +737,11 @@ const ManageBookings = () => {
                         <div className="flex justify-between">
                           <span className="text-gray-600">Created</span>
                           <span>
-                            {new Date(
-                              selectedBooking.createdAt
-                            ).toLocaleDateString()}
+                            {selectedBooking.createdAt
+                              ? new Date(
+                                  selectedBooking.createdAt
+                                ).toLocaleDateString()
+                              : "N/A"}
                           </span>
                         </div>
                         {selectedBooking.updatedAt && (
@@ -738,7 +794,7 @@ const ManageBookings = () => {
                             toast.error("No email available for this customer");
                           }
                         }}
-                        className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                        className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         <Mail className="w-4 h-4" />
                         Email

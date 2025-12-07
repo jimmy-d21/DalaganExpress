@@ -130,7 +130,7 @@ export const deleteMotor = async (req, res) => {
   }
 };
 
-// API to get Dashboard Data (Motor Version)
+// API to get Dashboard Data (Motor Version) - Fixed
 export const getDashboardData = async (req, res) => {
   try {
     const { _id, role } = req.user;
@@ -144,12 +144,12 @@ export const getDashboardData = async (req, res) => {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    // Fetch all motores from owner
+    // Fetch all motors from owner
     const motors = await Motor.find({ owner: _id });
 
     // Fetch all bookings related to the owner
     const allBookings = await Booking.find({ owner: _id })
-      .populate("motor") // <-- changed from car
+      .populate("motor")
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
@@ -170,12 +170,29 @@ export const getDashboardData = async (req, res) => {
       (b) => b.status === "confirmed" && new Date(b.returnDate) >= currentDate
     );
 
+    // Helper function to get booking amount
+    const getBookingAmount = (booking) => {
+      if (booking.totalPrice) return booking.totalPrice;
+      if (booking.price) return booking.price;
+      if (booking.motor?.pricePerDay) {
+        const pickup = new Date(booking.pickupDate);
+        const returnDate = new Date(booking.returnDate);
+        const diffTime = Math.abs(returnDate - pickup);
+        const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return booking.motor.pricePerDay * days;
+      }
+      return 0;
+    };
+
     // Total Earnings (completed + confirmed)
     const totalEarnings = allBookings
-      .filter((booking) => booking.status === "completed")
-      .reduce((acc, booking) => acc + booking.price, 0);
+      .filter(
+        (booking) =>
+          booking.status === "completed" || booking.status === "confirmed"
+      )
+      .reduce((acc, booking) => acc + getBookingAmount(booking), 0);
 
-    // Monthly Revenue (this month only)
+    // Monthly Revenue (this month only - completed bookings)
     const monthlyRevenue = allBookings
       .filter((booking) => {
         const bookingDate = new Date(booking.createdAt);
@@ -185,7 +202,7 @@ export const getDashboardData = async (req, res) => {
           bookingDate.getFullYear() === currentYear
         );
       })
-      .reduce((acc, booking) => acc + booking.price, 0);
+      .reduce((acc, booking) => acc + getBookingAmount(booking), 0);
 
     // Last month's revenue
     const lastMonthRevenue = allBookings
@@ -195,12 +212,12 @@ export const getDashboardData = async (req, res) => {
         const year = currentMonth === 0 ? currentYear - 1 : currentYear;
 
         return (
-          (booking.status === "completed" || booking.status === "confirmed") &&
+          booking.status === "completed" &&
           bookingDate.getMonth() === lastMonth &&
           bookingDate.getFullYear() === year
         );
       })
-      .reduce((acc, booking) => acc + booking.price, 0);
+      .reduce((acc, booking) => acc + getBookingAmount(booking), 0);
 
     const revenueChange =
       lastMonthRevenue > 0
@@ -234,9 +251,14 @@ export const getDashboardData = async (req, res) => {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3)
       .map((item) => ({
-        ...item.motor.toObject(),
+        _id: item.motor._id,
+        brand: item.motor.brand,
+        model: item.motor.model,
+        image: item.motor.image,
+        pricePerDay: item.motor.pricePerDay,
+        category: item.motor.category,
         bookings: item.count,
-        rating: 4.5 + Math.random() * 0.5, // Mock rating
+        rating: 4.5 + Math.random() * 0.5,
       }));
 
     // Mock average rating for dashboard
@@ -265,15 +287,20 @@ export const getDashboardData = async (req, res) => {
     }
 
     // Last 5 recent bookings
-    const recentBookings = allBookings.slice(0, 5).map((booking) => ({
-      ...booking.toObject(),
-      user: booking.user
-        ? {
-            name: booking.user.name,
-            email: booking.user.email,
-          }
-        : null,
-    }));
+    const recentBookings = allBookings.slice(0, 5).map((booking) => {
+      const bookingAmount = getBookingAmount(booking);
+      return {
+        ...booking.toObject(),
+        price: bookingAmount, // Add price field for frontend compatibility
+        totalPrice: bookingAmount,
+        user: booking.user
+          ? {
+              name: booking.user.name,
+              email: booking.user.email,
+            }
+          : null,
+      };
+    });
 
     // Dashboard Response
     const dashboardData = {
@@ -296,10 +323,10 @@ export const getDashboardData = async (req, res) => {
       // Stats for cards
       stats: {
         earningsGrowth: revenueChange > 0 ? "up" : "down",
-        bookingGrowth: 12, // mock
-        customerSatisfaction: 93, // mock
+        bookingGrowth: 12,
+        customerSatisfaction: 93,
         motorUtilization:
-          Math.round((activeBookings.length / motors.length) * 100) || 0,
+          Math.round((activeBookings.length / (motors.length || 1)) * 100) || 0,
       },
     };
 
@@ -307,7 +334,7 @@ export const getDashboardData = async (req, res) => {
       success: true,
       dashboardData,
       summary: {
-        totalRevenue: `₱${totalEarnings.toLocaleString()}`,
+        totalRevenue: `${currency}${totalEarnings.toLocaleString()}`,
         monthlyGrowth: `${revenueChange}%`,
         activeCustomers: allBookings.reduce((acc, booking) => {
           if (booking.user && !acc.includes(booking.user._id.toString())) {
