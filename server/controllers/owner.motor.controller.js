@@ -371,3 +371,72 @@ export const updateUserImage = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// Add this function to your owner.motor.controller.js
+export const updateMotor = async (req, res) => {
+  try {
+    const {
+      brand,
+      model,
+      year,
+      engine_cc,
+      category,
+      fuel_type,
+      transmission,
+      pricePerDay,
+      location,
+      description,
+    } = req.body;
+
+    const motorId = req.params.id || req.body.motorId;
+
+    // Find the motor
+    const motor = await Motor.findById(motorId);
+    if (!motor) {
+      return res.status(404).json({
+        success: false,
+        message: "Motorcycle not found",
+      });
+    }
+
+    // Check if user owns this motor
+    if (motor.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to update this motorcycle",
+      });
+    }
+
+    // Update the motor
+    motor.brand = brand || motor.brand;
+    motor.model = model || motor.model;
+    motor.year = year || motor.year;
+    motor.engine_cc = engine_cc || motor.engine_cc;
+    motor.category = category || motor.category;
+    motor.fuel_type = fuel_type || motor.fuel_type;
+    motor.transmission = transmission || motor.transmission;
+    motor.pricePerDay = pricePerDay || motor.pricePerDay;
+    motor.location = location || motor.location;
+    motor.description = description || motor.description;
+
+    // Handle image update if provided
+    if (req.file) {
+      motor.image = req.file.path;
+    }
+
+    await motor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Motorcycle updated successfully",
+      motor,
+    });
+  } catch (error) {
+    console.error("Update motor error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};

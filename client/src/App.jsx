@@ -22,6 +22,7 @@ import AddMotor from "./pages/owner/AddMotor";
 import MotorDetails from "./pages/MotorDetails";
 import Motors from "./pages/Motors";
 import ManageMotors from "./pages/ManageMotors";
+import UpdateMotor from "./components/owner/UpdateMotor";
 
 const App = () => {
   const { showLogin } = useAppContext();
@@ -44,6 +45,7 @@ const App = () => {
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="add-motor" element={<AddMotor />} />
+          <Route path="update-motor/:id" element={<UpdateMotor />} />
           <Route path="manage-motors" element={<ManageMotors />} />
           <Route path="manage-bookings" element={<ManageBookings />} />
         </Route>

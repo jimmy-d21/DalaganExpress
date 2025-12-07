@@ -1,3 +1,4 @@
+// pages/owner/ManageMotors.jsx
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -29,7 +30,7 @@ import toast from "react-hot-toast";
 import LoadingScreen from "../components/LoadingScreen";
 
 const ManageMotors = () => {
-  const { isOwner, axios, currency, fetchMotors, navigate } = useAppContext(); // Fixed: fecthMotors → fetchMotors
+  const { isOwner, axios, currency, fetchMotors, navigate } = useAppContext();
   const [loading, setLoading] = useState(true);
   const [motors, setMotors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,7 +91,7 @@ const ManageMotors = () => {
       if (data.success) {
         toast.success(data.message);
         fetchOwnerMotors();
-        fetchMotors(); // Fixed: fecthMotors → fetchMotors
+        fetchMotors();
         setShowDeleteModal(false);
         setMotorToDelete(null);
       }
@@ -111,19 +112,19 @@ const ManageMotors = () => {
 
     const matchesStatus =
       filterStatus === "all" ||
-      (filterStatus === "available" && motor.isAvailable) || // Fixed: isAvaliable → isAvailable
-      (filterStatus === "unavailable" && !motor.isAvailable); // Fixed: isAvaliable → isAvailable
+      (filterStatus === "available" && motor.isAvailable) ||
+      (filterStatus === "unavailable" && !motor.isAvailable);
 
     const matchesType =
       filterType === "all" ||
-      motor.category?.toLowerCase() === filterType.toLowerCase(); // Changed: type → category
+      motor.category?.toLowerCase() === filterType.toLowerCase();
 
     return matchesSearch && matchesStatus && matchesType;
   });
 
   // Get motorcycle types for filter
   const motorTypes = [
-    ...new Set(motors.map((motor) => motor.category).filter(Boolean)), // Changed: type → category
+    ...new Set(motors.map((motor) => motor.category).filter(Boolean)),
   ];
 
   useEffect(() => {
@@ -190,8 +191,7 @@ const ManageMotors = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Available</h3>
               <p className="text-3xl font-bold mt-2">
-                {motors.filter((motor) => motor.isAvailable).length}{" "}
-                {/* Fixed: isAvaliable → isAvailable */}
+                {motors.filter((motor) => motor.isAvailable).length}
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-xl">
@@ -205,8 +205,7 @@ const ManageMotors = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Booked</h3>
               <p className="text-3xl font-bold mt-2">
-                {motors.filter((motor) => !motor.isAvailable).length}{" "}
-                {/* Fixed: isAvaliable → isAvailable */}
+                {motors.filter((motor) => !motor.isAvailable).length}
               </p>
             </div>
             <div className="p-3 bg-yellow-100 rounded-xl">
@@ -306,13 +305,12 @@ const ManageMotors = () => {
               <div className="absolute top-3 right-3">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    motor.isAvailable // Fixed: isAvaliable → isAvailable
+                    motor.isAvailable
                       ? "bg-green-100 text-green-800"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {motor.isAvailable ? "Available" : "Booked"}{" "}
-                  {/* Fixed: isAvaliable → isAvailable */}
+                  {motor.isAvailable ? "Available" : "Booked"}
                 </span>
               </div>
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
@@ -321,8 +319,7 @@ const ManageMotors = () => {
                     {motor.brand} {motor.model}
                   </h3>
                   <p className="text-white/80 text-sm">
-                    {motor.year} • {motor.category} • {motor.engine_cc}cc{" "}
-                    {/* Fixed: engineSize → engine_cc */}
+                    {motor.year} • {motor.category} • {motor.engine_cc}cc
                   </p>
                 </div>
               </div>
@@ -340,7 +337,7 @@ const ManageMotors = () => {
                       /day
                     </span>
                   </p>
-                  {motor.category && ( // Changed: type → category
+                  {motor.category && (
                     <span className="text-xs font-medium px-2 py-1 bg-orange-100 text-orange-700 rounded-full">
                       {motor.category}
                     </span>
@@ -356,8 +353,7 @@ const ManageMotors = () => {
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Zap className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm">{motor.engine_cc}cc</span>{" "}
-                  {/* Fixed: engineSize → engine_cc */}
+                  <span className="text-sm">{motor.engine_cc}cc</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Gauge className="w-4 h-4 text-blue-500" />
@@ -388,12 +384,12 @@ const ManageMotors = () => {
                 <button
                   onClick={() => toggleAvailability(motor._id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    motor.isAvailable // Fixed: isAvaliable → isAvailable
+                    motor.isAvailable
                       ? "bg-gray-100 hover:bg-gray-200 text-gray-700"
                       : "bg-orange-100 hover:bg-orange-200 text-orange-700"
                   }`}
                 >
-                  {motor.isAvailable ? ( // Fixed: isAvaliable → isAvailable
+                  {motor.isAvailable ? (
                     <>
                       <EyeOff className="w-4 h-4" />
                       <span className="text-sm font-medium">
@@ -411,7 +407,10 @@ const ManageMotors = () => {
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <button className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => navigate(`/owner/update-motor/${motor._id}`)}
+                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
@@ -439,7 +438,10 @@ const ManageMotors = () => {
               ? "No motorcycles match your search criteria. Try different filters."
               : "You haven't listed any motorcycles yet. Add your first bike to start renting!"}
           </p>
-          <button className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium rounded-lg transition-all duration-200 inline-flex items-center gap-2">
+          <button
+            onClick={() => navigate("/owner/add-motor")}
+            className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium rounded-lg transition-all duration-200 inline-flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" />
             Add Your First Motorcycle
           </button>
@@ -501,7 +503,7 @@ const ManageMotors = () => {
               <p className="text-sm text-gray-600 mb-1">Most Popular Type</p>
               <p className="text-xl font-bold text-gray-900">
                 {(() => {
-                  const types = motors.map((m) => m.category); // Changed: type → category
+                  const types = motors.map((m) => m.category);
                   const counts = {};
                   types.forEach((type) => {
                     counts[type] = (counts[type] || 0) + 1;
@@ -518,7 +520,7 @@ const ManageMotors = () => {
               <p className="text-xl font-bold text-gray-900">
                 {Math.round(
                   motors.reduce(
-                    (acc, motor) => acc + (parseInt(motor.engine_cc) || 0), // Fixed: engineSize → engine_cc
+                    (acc, motor) => acc + (parseInt(motor.engine_cc) || 0),
                     0
                   ) / motors.length
                 )}
@@ -529,7 +531,7 @@ const ManageMotors = () => {
               <p className="text-sm text-gray-600 mb-1">Utilization Rate</p>
               <p className="text-xl font-bold text-gray-900">
                 {Math.round(
-                  (motors.filter((m) => !m.isAvailable).length / // Fixed: isAvaliable → isAvailable
+                  (motors.filter((m) => !m.isAvailable).length /
                     motors.length) *
                     100
                 )}

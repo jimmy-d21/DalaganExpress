@@ -8,6 +8,7 @@ import {
   getDashboardData,
   getOwnerMotors,
   toggleMotorAvailability,
+  updateMotor,
   updateUserImage,
 } from "../controllers/owner.motor.controller.js";
 
@@ -24,6 +25,12 @@ ownerMotorRouter.post(
   upload.single("image"),
   protect,
   updateUserImage
+);
+ownerMotorRouter.put(
+  "/update-motor/:id",
+  upload.single("image"),
+  protect,
+  updateMotor
 );
 
 export default ownerMotorRouter;
