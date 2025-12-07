@@ -34,9 +34,7 @@ const App = () => {
       {!isOwnerPath && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/car-details/:id" element={<CarDetails />} />
         <Route path="/motor-details/:id" element={<MotorDetails />} />
-        <Route path="/bikes" element={<Cars />} />
         <Route path="/motors" element={<Motors />} />
         <Route path="/bookings" element={<MyBookings />} />
         <Route path="/about" element={<AboutUs />} />
@@ -45,9 +43,7 @@ const App = () => {
         <Route path="/favorite" element={<Favorite />} />
         <Route path="/owner" element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="add-car" element={<AddCar />} />
           <Route path="add-motor" element={<AddMotor />} />
-          <Route path="manage-cars" element={<ManageCars />} />
           <Route path="manage-motors" element={<ManageMotors />} />
           <Route path="manage-bookings" element={<ManageBookings />} />
         </Route>
