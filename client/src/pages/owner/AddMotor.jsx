@@ -25,7 +25,8 @@ import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 
 const AddMotor = () => {
-  const { axios, currency, fetchMotors, motors } = useAppContext();
+  const currency = "₱";
+  const { axios, fetchMotors, motors } = useAppContext();
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isLoading, setLoading] = useState(false);
