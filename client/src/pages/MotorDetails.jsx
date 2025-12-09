@@ -30,6 +30,7 @@ import {
   AlertCircle,
   User,
   Globe,
+  LocateIcon,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
@@ -38,12 +39,14 @@ import Loader from "../components/Loader";
 const MotorDetails = () => {
   const { id } = useParams();
   const [motor, setMotor] = useState(null);
-  const [pickupLocation, setPickupLocation] = useState("main-office");
-  const [rentalDays, setRentalDays] = useState(1);
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [dropOffLocation, setDropOffLocation] = useState("");
+  const [rentalDays, setRentalDays] = useState(3); // Default to 3 days
   const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [showMap, setShowMap] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [totalKm, setTotalKm] = useState(5);
 
   const {
     motors,
@@ -57,6 +60,57 @@ const MotorDetails = () => {
     user,
     setShowLogin,
   } = useAppContext();
+
+  // Set default dates when component loads
+  useEffect(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    const threeDaysLater = new Date(tomorrow);
+    threeDaysLater.setDate(tomorrow.getDate() + 3);
+
+    // Format dates as YYYY-MM-DD for input fields
+    const formatDate = (date) => {
+      return date.toISOString().split("T")[0];
+    };
+
+    // Always set default dates
+    setPickupDate(formatDate(tomorrow));
+    setReturnDate(formatDate(threeDaysLater));
+  }, [setPickupDate, setReturnDate]);
+
+  // Generate random total KM based on locations
+  useEffect(() => {
+    if (pickupLocation.trim() && dropOffLocation.trim()) {
+      // Generate a random KM between 5 and 100 based on input locations
+      const generateRandomKm = () => {
+        // Use a hash of the locations to make it consistent for same inputs
+        const hash = (pickupLocation + dropOffLocation)
+          .split("")
+          .reduce((acc, char) => {
+            return acc + char.charCodeAt(0);
+          }, 0);
+
+        // Generate a random number between 5 and 100
+        const randomKm = (hash % 95) + 5; // 5-100 km range
+        return Math.round(randomKm); // Round to nearest integer
+      };
+
+      setTotalKm(5);
+    } else {
+      setTotalKm(0);
+    }
+  }, [pickupLocation, dropOffLocation]);
+
+  // Calculate price based on distance: 65 pesos per 5km
+  const calculateDistancePrice = () => {
+    if (totalKm <= 0) return 0;
+
+    // Calculate number of 5km increments
+    const fiveKmIncrements = Math.ceil(totalKm / 5);
+    return fiveKmIncrements * motor.pricePerDay;
+  };
 
   // Generate Google Maps URL for motor location
   const getGoogleMapsUrl = (location) => {
@@ -109,45 +163,38 @@ const MotorDetails = () => {
   const features = [
     {
       id: "helmet",
-      name: "Premium Helmet",
+      name: "10km",
       icon: <HardHat className="w-5 h-5" />,
-      price: 5,
+      price: 40,
       description: "Full-face helmet with Bluetooth",
     },
     {
       id: "insurance",
-      name: "Full Coverage Insurance",
+      name: "12km",
       icon: <Shield className="w-5 h-5" />,
-      price: 10,
+      price: 50,
       description: "Accident and theft protection",
     },
     {
       id: "gps",
-      name: "Adventure GPS",
+      name: "15km",
       icon: <Navigation className="w-5 h-5" />,
-      price: 8,
+      price: 80,
       description: "Off-road maps and routes",
     },
     {
       id: "jacket",
-      name: "Riding Jacket",
+      name: "17km",
       icon: <User className="w-5 h-5" />,
-      price: 7,
+      price: 100,
       description: "Protective riding gear",
     },
     {
       id: "actioncam",
-      name: "Action Camera",
+      name: "20km",
       icon: <Radio className="w-5 h-5" />,
-      price: 15,
+      price: 120,
       description: "Capture your adventure",
-    },
-    {
-      id: "phoneMount",
-      name: "Phone Mount",
-      icon: <Sparkles className="w-5 h-5" />,
-      price: 3,
-      description: "Secure phone holder",
     },
   ];
 
@@ -167,21 +214,15 @@ const MotorDetails = () => {
       return;
     }
 
-    if (!pickupDate || !returnDate) {
-      toast.error("Please select pickup and return dates");
+    // Check if pickup and drop-off locations are provided
+    if (!pickupLocation.trim() || !dropOffLocation.trim()) {
+      toast.error("Please enter both pickup and drop-off locations");
       return;
     }
 
-    const picked = new Date(pickupDate);
-    const returned = new Date(returnDate);
-
-    if (picked >= returned) {
-      toast.error("Return date must be after pickup date");
-      return;
-    }
-
-    if (picked < new Date().setHours(0, 0, 0, 0)) {
-      toast.error("Pickup date cannot be in the past");
+    // Check if total KM is reasonable
+    if (totalKm < 1) {
+      toast.error("Please enter valid pickup and drop-off locations");
       return;
     }
 
@@ -216,24 +257,26 @@ const MotorDetails = () => {
 
       // Proceed with booking
       setIsLoading(true);
+
       const { data } = await axios.post("/api/motor/bookings/create", {
         motor: id,
-        pickupDate,
-        returnDate,
+        pickupDate, // Using default value automatically set
+        returnDate, // Using default value automatically set
         pickupLocation,
+        dropOffLocation,
         rentalDays,
         selectedFeatures: featuresData,
         totalPrice: calculateTotalPrice(),
+        totalKm, // Send total KM to backend
       });
 
       if (data.success) {
         toast.success("🏍️ Motorcycle booked successfully!");
         // Reset form
-        setPickupDate("");
-        setReturnDate("");
-        setRentalDays(1);
+        setPickupLocation("");
+        setDropOffLocation("");
         setSelectedFeatures([]);
-        setPickupLocation("main-office");
+        setTotalKm(0);
         // Navigate to bookings page
         navigate("/bookings");
       } else {
@@ -251,13 +294,16 @@ const MotorDetails = () => {
   };
 
   const calculateTotalPrice = () => {
-    if (!motor) return 0;
-    const basePrice = motor.pricePerDay * rentalDays;
+    // Calculate base price based on distance: 65 pesos per 5km
+    const distancePrice = calculateDistancePrice();
+
+    // Calculate features price
     const featuresPrice = selectedFeatures.reduce((total, featureId) => {
       const feature = features.find((f) => f.id === featureId);
-      return total + (feature ? feature.price * rentalDays : 0);
+      return total + (feature ? feature.price : 0);
     }, 0);
-    return basePrice + featuresPrice;
+
+    return distancePrice + featuresPrice;
   };
 
   const toggleFeature = (featureId) => {
@@ -350,11 +396,10 @@ const MotorDetails = () => {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold">
-                {currency}
-                {motor.pricePerDay}
+                P{motor.pricePerDay}
                 <span className="text-sm font-normal text-white/60">
                   {" "}
-                  / day
+                  / 5km
                 </span>
               </div>
               <p className="text-white/60">Helmet & basic insurance included</p>
@@ -493,15 +538,14 @@ const MotorDetails = () => {
             >
               <h2 className="text-2xl font-bold mb-4">About This Motorcycle</h2>
               <p className="text-gray-600 leading-relaxed mb-6">
-                {motor.description ||
-                  `Experience the thrill of riding the ${motor.brand} ${motor.model} through the beautiful landscapes of Negros Island. This ${motor.year} model with its powerful ${motor.engine_cc}cc engine and ${motor.transmission} transmission is perfect for exploring everything from Bacolod's city streets to Dumaguete's coastal roads.`}
+                {motor.description ? motor.description : "Ride Now"}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl">
                   <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    Perfect For Negros
+                    Recommended for peak hours - (Fast and Efficient in traffic)
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• Mountain roads to Mambukal</li>
@@ -513,7 +557,8 @@ const MotorDetails = () => {
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-xl">
                   <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-600" />
-                    Safety Features
+                    Safety Features - (ABS braking system, Helmet, Hair net,
+                    safety vest)
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• ABS Braking System</li>
@@ -534,7 +579,7 @@ const MotorDetails = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold">Motorcycle Location</h2>
+                  <h2 className="text-2xl font-bold">Rider Location</h2>
                   <p className="text-gray-600">
                     This motorcycle is located in {motor.location}
                   </p>
@@ -674,7 +719,7 @@ const MotorDetails = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">
-                        Motorcycle Pickup Location
+                        Pickup Location
                       </h3>
                       <p className="text-gray-600 mb-2">{motor.location}</p>
                       <div className="flex flex-wrap gap-1.5">
@@ -735,11 +780,10 @@ const MotorDetails = () => {
             >
               <div className="mb-6">
                 <div className="text-3xl font-bold mb-2 text-gray-900">
-                  {currency}
-                  {motor.pricePerDay}
+                  P{motor.pricePerDay}
                   <span className="text-lg font-normal text-gray-500">
                     {" "}
-                    / day
+                    / 5km
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 flex items-center gap-2">
@@ -749,56 +793,86 @@ const MotorDetails = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Date Selection */}
+                {/* Hidden Date Inputs (automatically set) */}
+                <input
+                  type="hidden"
+                  value={pickupDate || ""}
+                  onChange={(e) => setPickupDate(e.target.value)}
+                />
+                <input
+                  type="hidden"
+                  value={returnDate || ""}
+                  onChange={(e) => setReturnDate(e.target.value)}
+                />
+
+                {/* Location Inputs */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Adventure Dates
+                    <MapPin className="w-4 h-4" />
+                    Pickup & Drop-off Locations *
                   </label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <LocateIcon className="w-5 h-5 text-gray-400" />
                       <input
-                        type="date"
-                        value={pickupDate}
-                        onChange={(e) => setPickupDate(e.target.value)}
+                        type="text"
+                        placeholder="Enter pickup Location (e.g., Bacolod City)"
+                        value={pickupLocation}
+                        onChange={(e) => setPickupLocation(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                         required
-                        min={new Date().toISOString().split("T")[0]}
                       />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Start Ride
-                      </div>
                     </div>
-                    <div>
+                    <div className="flex items-center gap-2">
+                      <LocateIcon className="w-5 h-5 text-gray-400" />
                       <input
-                        type="date"
-                        value={returnDate}
-                        onChange={(e) => setReturnDate(e.target.value)}
+                        type="text"
+                        placeholder="Enter Drop-off Location (e.g., Dumaguete City)"
+                        value={dropOffLocation}
+                        onChange={(e) => setDropOffLocation(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                         required
-                        min={
-                          pickupDate || new Date().toISOString().split("T")[0]
-                        }
                       />
-                      <div className="text-xs text-gray-500 mt-1">End Ride</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Days Counter */}
+                {/* Distance Calculator */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Adventure Duration
+                    Adventure Distance
                   </label>
                   <div className="text-center p-4 bg-gradient-to-r from-gray-50 to-red-50 rounded-xl border border-gray-200">
                     <div className="text-2xl font-bold text-gray-900 mb-1">
-                      {rentalDays} day{rentalDays > 1 ? "s" : ""}
+                      {totalKm > 0 ? `${totalKm} km` : "Enter locations"}
                     </div>
                     <div className="text-sm text-gray-600">
-                      {currency}
-                      {motor.pricePerDay * rentalDays} base price
+                      {pickupLocation && dropOffLocation ? (
+                        <span>
+                          Distance from {pickupLocation.substring(0, 15)}... to{" "}
+                          {dropOffLocation.substring(0, 15)}...
+                        </span>
+                      ) : (
+                        <span>Enter locations to calculate distance</span>
+                      )}
                     </div>
+                    {totalKm > 0 && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <div className="flex items-center justify-center gap-1">
+                          <Navigation className="w-3 h-3" />
+                          Estimated travel distance
+                        </div>
+                        <div className="mt-1 flex items-center justify-center gap-2">
+                          <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                            ⛽ {Math.round(totalKm / 30)}L fuel needed
+                          </span>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                            ⏱️ {Math.round(totalKm / 40)} hours approx
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -849,8 +923,7 @@ const MotorDetails = () => {
                           </div>
                         </div>
                         <span className="font-bold text-red-600 flex-shrink-0">
-                          +{currency}
-                          {feature.price}/day
+                          +P{feature.price}
                         </span>
                       </label>
                     ))}
@@ -862,11 +935,13 @@ const MotorDetails = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">
-                        Base Price ({rentalDays} days)
+                        Base Price ({totalKm} km)
                       </span>
                       <span className="font-medium">
-                        {currency}
-                        {motor.pricePerDay * rentalDays}
+                        P{calculateDistancePrice()}
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({Math.ceil(totalKm / 5)} × 5km increments)
+                        </span>
                       </span>
                     </div>
                     {selectedFeatures.map((featureId) => {
@@ -877,21 +952,15 @@ const MotorDetails = () => {
                           className="flex justify-between text-sm"
                         >
                           <span className="text-gray-500">{feature.name}</span>
-                          <span>
-                            +{currency}
-                            {feature.price * rentalDays}
-                          </span>
+                          <span>+P{feature.price}</span>
                         </div>
                       ) : null;
                     })}
                     <hr className="my-3 border-gray-300" />
                     <div className="flex justify-between text-lg font-bold">
-                      <span className="text-gray-900">
-                        Total Adventure Cost
-                      </span>
+                      <span className="text-gray-900">Total Ride Cost:</span>
                       <span className="text-red-600">
-                        {currency}
-                        {calculateTotalPrice()}
+                        P{calculateTotalPrice()}
                       </span>
                     </div>
                     <div className="text-xs text-gray-500 text-center pt-2">

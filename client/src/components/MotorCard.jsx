@@ -295,7 +295,7 @@ const MotorCard = ({ motor }) => {
                 {currency}
                 <span className="text-red-400">{motor.pricePerDay}</span>
               </div>
-              <p className="text-xs text-gray-400">per day</p>
+              <p className="text-xs text-gray-400">/ 5km</p>
             </div>
           </div>
         </div>

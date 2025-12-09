@@ -371,7 +371,7 @@ const Favorite = () => {
                               <div className="text-4xl font-bold text-gray-900">
                                 ₱{selectedMotor.motor.pricePerDay}
                                 <span className="text-lg text-gray-500">
-                                  /day
+                                  /5km
                                 </span>
                               </div>
                               <div className="flex items-center gap-2 mt-2">
@@ -978,7 +978,7 @@ const Favorite = () => {
                               <div className="text-2xl font-bold text-gray-900">
                                 ₱{favorite.motor.pricePerDay}
                                 <span className="text-sm text-gray-500 font-normal">
-                                  /day
+                                  /5km
                                 </span>
                               </div>
                             </div>
@@ -1128,7 +1128,7 @@ const Favorite = () => {
                                 <div className="text-2xl font-bold text-gray-900">
                                   ₱{favorite.motor.pricePerDay}
                                   <span className="text-sm text-gray-500 font-normal">
-                                    /day
+                                    /5km
                                   </span>
                                 </div>
                                 <div className="text-xs text-gray-500">

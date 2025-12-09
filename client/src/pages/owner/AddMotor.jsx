@@ -511,14 +511,15 @@ const AddMotor = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Daily Price ({currency}){" "}
-                    <span className="text-red-500">*</span>
+                    Price ({currency}) <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <p className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400">
+                      {currency}
+                    </p>
                     <input
                       type="number"
-                      placeholder="300"
+                      placeholder="65"
                       min="1"
                       value={motor.pricePerDay}
                       onChange={(e) =>
@@ -528,7 +529,7 @@ const AddMotor = () => {
                       required
                     />
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                      / day
+                      / 5km
                     </div>
                   </div>
                 </div>
@@ -816,7 +817,7 @@ const AddMotor = () => {
                       <p className="text-gray-600">{motor.year || "Year"}</p>
                       <p className="text-2xl font-bold text-red-600">
                         {currency}
-                        {motor.pricePerDay || "0"}/day
+                        {motor.pricePerDay || "0"}/5km
                       </p>
                       <div className="flex flex-wrap gap-2">
                         <span className="px-3 py-1 bg-white/80 text-gray-700 rounded-full text-sm">

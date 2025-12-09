@@ -23,6 +23,8 @@ import {
   Wind,
   Shield,
   Zap,
+  Navigation,
+  Route,
 } from "lucide-react";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
@@ -116,7 +118,9 @@ const ManageBookings = () => {
           booking.motor?.brand?.toLowerCase().includes(term) ||
           booking.motor?.model?.toLowerCase().includes(term) ||
           booking.user?.name?.toLowerCase().includes(term) ||
-          booking.status?.toLowerCase().includes(term)
+          booking.status?.toLowerCase().includes(term) ||
+          booking.pickupLocation?.toLowerCase().includes(term) ||
+          booking.dropOffLocation?.toLowerCase().includes(term)
       );
     }
 
@@ -153,24 +157,19 @@ const ManageBookings = () => {
     }
   };
 
-  // Calculate days from booking dates
-  const calculateDays = (pickupDate, returnDate) => {
-    if (!pickupDate || !returnDate) return 1;
-    const pickup = new Date(pickupDate);
-    const returnD = new Date(returnDate);
-    const diffTime = Math.abs(returnD - pickup);
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  // Calculate price per KM
+  const calculatePricePerKm = (booking) => {
+    if (booking.totalKm && booking.totalPrice) {
+      return Math.round((booking.totalPrice / booking.totalKm) * 100) / 100;
+    }
+    return 65; // Default P65 per 5km
   };
 
-  // Calculate total price
-  const calculateTotalPrice = (booking) => {
-    if (booking.totalPrice) return booking.totalPrice;
-    if (booking.price) return booking.price;
-    if (booking.motor?.pricePerDay) {
-      const days = calculateDays(booking.pickupDate, booking.returnDate);
-      return booking.motor.pricePerDay * days;
-    }
-    return 0;
+  // Format location (shorten if too long)
+  const formatLocation = (location, maxLength = 25) => {
+    if (!location) return "Not specified";
+    if (location.length <= maxLength) return location;
+    return `${location.substring(0, maxLength)}...`;
   };
 
   useEffect(() => {
@@ -187,9 +186,10 @@ const ManageBookings = () => {
     pending: bookings.filter((b) => b.status === "pending").length,
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
     completed: bookings.filter((b) => b.status === "completed").length,
+    totalKm: bookings.reduce((sum, booking) => sum + (booking.totalKm || 0), 0),
     revenue: bookings
       .filter((b) => b.status === "completed" || b.status === "confirmed")
-      .reduce((sum, booking) => sum + calculateTotalPrice(booking), 0),
+      .reduce((sum, booking) => sum + (booking.totalPrice || 0), 0),
   };
 
   return (
@@ -204,11 +204,11 @@ const ManageBookings = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Manage Motorcycle Bookings
+              Manage Ride Bookings
             </h1>
             <p className="text-gray-600 mt-2">
-              Track all customer bookings, approve or cancel requests, and
-              manage booking statuses for your motorcycles.
+              Track all ride bookings, manage customer trips, and monitor ride
+              statuses.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -216,8 +216,8 @@ const ManageBookings = () => {
               onClick={fetchOwnerBookings}
               className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-all duration-200 flex items-center gap-2"
             >
-              <Calendar className="w-4 h-4" />
-              Refresh Bookings
+              <Route className="w-4 h-4" />
+              Refresh Rides
             </button>
           </div>
         </div>
@@ -229,24 +229,12 @@ const ManageBookings = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Total Bookings
+                Total Rides
               </h3>
               <p className="text-3xl font-bold mt-2">{stats.total}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-xl">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Pending</h3>
-              <p className="text-3xl font-bold mt-2">{stats.pending}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-xl">
-              <Clock className="w-6 h-6 text-yellow-600" />
+              <Route className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
@@ -266,14 +254,30 @@ const ManageBookings = () => {
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Total Distance
+              </h3>
+              <p className="text-3xl font-bold mt-2">
+                {stats.totalKm.toLocaleString()} km
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-xl">
+              <Navigation className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
               <h3 className="text-lg font-semibold text-gray-900">Revenue</h3>
               <p className="text-3xl font-bold mt-2">
                 {currency}
                 {stats.revenue.toLocaleString()}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
+            <div className="p-3 bg-orange-100 rounded-xl">
+              <DollarSign className="w-6 h-6 text-orange-600" />
             </div>
           </div>
         </div>
@@ -287,7 +291,7 @@ const ManageBookings = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search bookings by motorcycle, customer, or status..."
+                placeholder="Search by motorcycle, customer, pickup/drop-off location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -322,13 +326,16 @@ const ManageBookings = () => {
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer & Motorcycle
+                    Ride Details
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Booking Details
+                    Locations
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
+                    Customer
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price & Distance
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -340,11 +347,7 @@ const ManageBookings = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredBookings.map((booking, index) => {
-                  const totalPrice = calculateTotalPrice(booking);
-                  const days = calculateDays(
-                    booking.pickupDate,
-                    booking.returnDate
-                  );
+                  const pricePerKm = calculatePricePerKm(booking);
 
                   return (
                     <motion.tr
@@ -372,49 +375,81 @@ const ManageBookings = () => {
                             </div>
                             <div className="text-sm text-gray-500 mt-1">
                               <div className="flex items-center gap-2">
-                                <User className="w-3 h-3" />
-                                {booking.user?.name || "Customer"}
+                                <Bike className="w-3 h-3" />
+                                {booking.motor?.category || "Motorcycle"}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Gauge className="w-3 h-3" />
+                                {booking.motor?.engine_cc}cc
                               </div>
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="font-medium">
-                              {booking.pickupDate
-                                ? new Date(
-                                    booking.pickupDate
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </span>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <MapPin className="w-4 h-4 text-green-500" />
+                              <span className="font-medium text-gray-900">
+                                Pickup
+                              </span>
+                            </div>
+                            <div className="pl-6 text-sm text-gray-700">
+                              {formatLocation(booking.pickupLocation)}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Clock className="w-4 h-4" />
-                            <span>
-                              to{" "}
-                              {booking.returnDate
-                                ? new Date(
-                                    booking.returnDate
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {days} day{days !== 1 ? "s" : ""}
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <MapPin className="w-4 h-4 text-red-500" />
+                              <span className="font-medium text-gray-900">
+                                Drop-off
+                              </span>
+                            </div>
+                            <div className="pl-6 text-sm text-gray-700">
+                              {formatLocation(booking.dropOffLocation)}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900 text-lg">
-                          {currency}
-                          {totalPrice.toLocaleString()}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {booking.user?.name || "Customer"}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {booking.user?.email || "No email"}
+                              </div>
+                            </div>
+                          </div>
+                          {booking.user?.phone && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Phone className="w-3 h-3" />
+                              {booking.user.phone}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-sm text-gray-500">
-                          {currency}
-                          {booking.motor?.pricePerDay || 0}/day
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <div className="font-bold text-gray-900 text-lg">
+                            {currency}
+                            {booking.totalPrice?.toLocaleString() || "0"}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <Navigation className="w-3 h-3" />
+                              {booking.totalKm || 0} km
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <DollarSign className="w-3 h-3" />P{pricePerKm}/km
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -459,7 +494,7 @@ const ManageBookings = () => {
                               onClick={() => handleQuickView(booking)}
                               className="text-xs text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
                             >
-                              Quick View
+                              View Details
                             </button>
                             <button
                               onClick={() => {
@@ -486,14 +521,14 @@ const ManageBookings = () => {
 
             {filteredBookings.length === 0 && (
               <div className="text-center py-12">
-                <div className="text-gray-400 text-5xl mb-4">📅</div>
+                <div className="text-gray-400 text-5xl mb-4">🚗</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No bookings found
+                  No ride bookings found
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
                   {searchTerm || statusFilter !== "all"
                     ? "No bookings match your current filters. Try adjusting your search criteria."
-                    : "You don't have any bookings yet. When customers book your motorcycles, they'll appear here."}
+                    : "You don't have any ride bookings yet. When customers book rides, they'll appear here."}
                 </p>
               </div>
             )}
@@ -504,7 +539,7 @@ const ManageBookings = () => {
       {/* Footer Stats */}
       <div className="mt-6 text-center text-gray-500 text-sm">
         <p>
-          Showing {filteredBookings.length} of {bookings.length} bookings • Last
+          Showing {filteredBookings.length} of {bookings.length} rides • Last
           updated:{" "}
           {new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -538,7 +573,7 @@ const ManageBookings = () => {
               <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-2xl font-bold text-gray-900">
-                    Booking Details
+                    Ride Details
                   </h2>
                   <button
                     onClick={closeQuickView}
@@ -621,7 +656,7 @@ const ManageBookings = () => {
                         <h4 className="font-semibold text-gray-900">
                           {selectedBooking.user?.name || "Customer"}
                         </h4>
-                        <p className="text-sm text-gray-600">Customer</p>
+                        <p className="text-sm text-gray-600">Rider</p>
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -641,49 +676,46 @@ const ManageBookings = () => {
                   </div>
                 </div>
 
-                {/* Booking Details */}
+                {/* Ride Route Details */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Booking Details
+                    Ride Route
                   </h3>
                   <div className="space-y-4">
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900">
-                          Rental Period
-                        </span>
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="text-sm text-gray-500">Pickup</div>
-                            <div className="font-medium">
-                              {selectedBooking.pickupDate
-                                ? new Date(
-                                    selectedBooking.pickupDate
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <MapPin className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-500">
+                            Pickup Location
                           </div>
-                          <div className="text-gray-400">→</div>
-                          <div>
-                            <div className="text-sm text-gray-500">Return</div>
-                            <div className="font-medium">
-                              {selectedBooking.returnDate
-                                ? new Date(
-                                    selectedBooking.returnDate
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </div>
+                          <div className="font-medium text-gray-900">
+                            {selectedBooking.pickupLocation}
                           </div>
                         </div>
-                        <div className="text-sm text-gray-500 text-center">
-                          {calculateDays(
-                            selectedBooking.pickupDate,
-                            selectedBooking.returnDate
-                          )}{" "}
-                          days total
+                      </div>
+                      <div className="pl-11 relative">
+                        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+                        <div className="text-gray-400 py-2 flex items-center">
+                          <Navigation className="w-4 h-4 mr-2" />
+                          <span className="text-xs">
+                            {selectedBooking.totalKm || 0} km ride
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <MapPin className="w-4 h-4 text-red-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">
+                              Drop-off Location
+                            </div>
+                            <div className="font-medium text-gray-900">
+                              {selectedBooking.dropOffLocation}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -691,31 +723,40 @@ const ManageBookings = () => {
                     <div className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-medium text-gray-900">
-                          Payment Details
+                          Ride Summary
                         </span>
-                        <DollarSign className="w-4 h-4 text-gray-400" />
+                        <Route className="w-4 h-4 text-gray-400" />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Total Amount</span>
-                          <span className="text-2xl font-bold text-gray-900">
-                            {currency}
-                            {calculateTotalPrice(
-                              selectedBooking
-                            ).toLocaleString()}
-                          </span>
+                          <div>
+                            <div className="text-sm text-gray-500">
+                              Total Distance
+                            </div>
+                            <div className="text-lg font-bold text-gray-900">
+                              {selectedBooking.totalKm || 0} km
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">
+                              Price per km
+                            </div>
+                            <div className="text-lg font-bold text-gray-900">
+                              P{calculatePricePerKm(selectedBooking)}/km
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex justify-between text-sm text-gray-500">
-                          <span>
-                            {currency}
-                            {selectedBooking.motor?.pricePerDay || 0} ×{" "}
-                            {selectedBooking.rentalDays ||
-                              calculateDays(
-                                selectedBooking.pickupDate,
-                                selectedBooking.returnDate
-                              )}{" "}
-                            days
-                          </span>
+                        <div className="pt-3 border-t border-gray-200">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600 font-medium">
+                              Total Amount
+                            </span>
+                            <span className="text-2xl font-bold text-gray-900">
+                              {currency}
+                              {selectedBooking.totalPrice?.toLocaleString() ||
+                                "0"}
+                            </span>
+                          </div>
                         </div>
                         <div className="flex justify-between text-sm text-gray-500">
                           <span>Booking ID</span>
@@ -723,37 +764,6 @@ const ManageBookings = () => {
                             {selectedBooking._id?.slice(-8)}
                           </span>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-900">
-                          Booking Timeline
-                        </span>
-                        <Clock className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="space-y-1 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Created</span>
-                          <span>
-                            {selectedBooking.createdAt
-                              ? new Date(
-                                  selectedBooking.createdAt
-                                ).toLocaleDateString()
-                              : "N/A"}
-                          </span>
-                        </div>
-                        {selectedBooking.updatedAt && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Last Updated</span>
-                            <span>
-                              {new Date(
-                                selectedBooking.updatedAt
-                              ).toLocaleDateString()}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -779,8 +789,8 @@ const ManageBookings = () => {
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                       >
                         <option value="pending">Pending</option>
-                        <option value="cancelled">Cancel Booking</option>
-                        <option value="confirmed">Confirm Booking</option>
+                        <option value="cancelled">Cancel Ride</option>
+                        <option value="confirmed">Confirm Ride</option>
                         <option value="completed">Mark as Completed</option>
                       </select>
                     ) : null}
@@ -797,17 +807,17 @@ const ManageBookings = () => {
                         className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 flex items-center justify-center gap-2"
                       >
                         <Mail className="w-4 h-4" />
-                        Email
+                        Email Rider
                       </button>
                       <button
                         onClick={() => {
-                          // Generate invoice functionality
-                          toast.success("Invoice generated successfully!");
+                          // Generate ride receipt functionality
+                          toast.success("Ride receipt generated successfully!");
                         }}
                         className="px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                       >
                         <FileText className="w-4 h-4" />
-                        Invoice
+                        Receipt
                       </button>
                     </div>
                   </div>

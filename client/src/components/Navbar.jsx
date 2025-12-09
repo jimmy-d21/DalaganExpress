@@ -59,7 +59,7 @@ const Navbar = () => {
       path: "/owner/manage-bookings",
     },
     {
-      icon: <DollarSign className="w-4 h-4" />,
+      icon: "₱",
       label: "Add Bike",
       path: "/owner/add-motor",
     },

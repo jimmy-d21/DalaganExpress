@@ -61,7 +61,7 @@ const Sidebar = () => {
           </button>
         )}
 
-        <p className="mt-3 text-lg font-semibold text-gray-700">
+        <p className="mt-3 text-sm font-semibold text-gray-700">
           {user?.name || "Owner"}
         </p>
       </div>

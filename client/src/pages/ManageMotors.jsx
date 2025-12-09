@@ -218,7 +218,7 @@ const ManageMotors = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Avg. Price/Day
+                Avg. Price/km
               </h3>
               <p className="text-3xl font-bold mt-2">
                 {currency}
@@ -334,7 +334,7 @@ const ManageMotors = () => {
                     {motor.pricePerDay}
                     <span className="text-sm font-normal text-gray-500">
                       {" "}
-                      /day
+                      /5km
                     </span>
                   </p>
                   {motor.category && (

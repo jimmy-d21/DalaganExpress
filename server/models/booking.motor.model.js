@@ -29,11 +29,19 @@ const bookingSchema = new mongoose.Schema(
     pickupLocation: {
       type: String,
       required: true,
-      default: "main-office",
+    },
+    dropOffLocation: {
+      type: String,
+      required: true,
     },
     rentalDays: {
       type: Number,
       required: true,
+    },
+    totalKm: {
+      type: Number,
+      required: true,
+      default: 0,
     },
     selectedFeatures: [
       {

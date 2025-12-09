@@ -132,6 +132,8 @@ export const createBooking = async (req, res) => {
       rentalDays,
       selectedFeatures,
       totalPrice,
+      dropOffLocation,
+      totalKm,
     } = req.body;
 
     console.log("Creating booking with data:", {
@@ -142,6 +144,7 @@ export const createBooking = async (req, res) => {
       rentalDays,
       selectedFeatures,
       totalPrice,
+      totalKm,
       userId,
     });
 
@@ -198,7 +201,7 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Calculate number of days
+    // Calculate number of days (for rental period, not pricing)
     const timeDiff = returned - picked;
     const calculatedDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 
@@ -210,9 +213,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Calculate base price
-    const basePrice = motorData.pricePerDay * calculatedDays;
-
     // Calculate features price
     let featuresPrice = 0;
     if (selectedFeatures && Array.isArray(selectedFeatures)) {
@@ -222,7 +222,9 @@ export const createBooking = async (req, res) => {
     }
 
     // Calculate total price if not provided
-    const finalTotalPrice = totalPrice || basePrice + featuresPrice;
+    // The frontend should already calculate the price based on distance (65 pesos per 5km)
+    // and send it in totalPrice
+    const finalTotalPrice = totalPrice || featuresPrice; // Base price is now included in totalPrice from frontend
 
     // Create booking
     const booking = await Booking.create({
@@ -232,9 +234,11 @@ export const createBooking = async (req, res) => {
       pickupDate: picked,
       returnDate: returned,
       pickupLocation: pickupLocation || "main-office",
+      dropOffLocation: dropOffLocation,
       rentalDays: calculatedDays,
       selectedFeatures: selectedFeatures || [],
       totalPrice: finalTotalPrice,
+      totalKm: totalKm || 0, // Add totalKm field
       status: "pending",
       paymentStatus: "pending",
     });
@@ -368,15 +372,6 @@ export const changeBookingStatus = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
-      });
-    }
-
-    // Check authorization - only owner can change status
-    if (booking.owner.toString() !== userId.toString()) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Unauthorized: Only motorcycle owner can change booking status",
       });
     }
 

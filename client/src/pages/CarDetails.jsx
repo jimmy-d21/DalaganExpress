@@ -648,7 +648,7 @@ const CarDetails = () => {
                         </div>
                         <span className="font-medium">
                           +{currency}
-                          {feature.price}/day
+                          {feature.price}/5km
                         </span>
                       </label>
                     ))}

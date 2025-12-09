@@ -279,7 +279,7 @@ const ManageCars = () => {
                     {car.pricePerDay}
                     <span className="text-sm font-normal text-gray-500">
                       {" "}
-                      /day
+                      /5km
                     </span>
                   </p>
                 </div>

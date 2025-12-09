@@ -22,7 +22,7 @@ const NavbarOwner = () => {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/login");
+    navigate("/");
   };
 
   // Close dropdown when clicking outside

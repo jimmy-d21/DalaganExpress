@@ -618,7 +618,7 @@ const Dashboard = () => {
                             </div>
                             <div className="text-xs text-gray-500">
                               {booking.motor?.pricePerDay
-                                ? `${currency}${booking.motor.pricePerDay}/day`
+                                ? `${currency}${booking.motor.pricePerDay}/5km`
                                 : "Rate not specified"}
                             </div>
                           </div>
@@ -773,7 +773,7 @@ const Dashboard = () => {
                       {currency}
                       {motor.pricePerDay || 0}
                       <span className="text-xs font-normal text-gray-500">
-                        /day
+                        /5km
                       </span>
                     </div>
                   </div>

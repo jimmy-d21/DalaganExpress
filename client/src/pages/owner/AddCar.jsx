@@ -711,7 +711,7 @@ const AddCar = () => {
                       <p className="text-gray-600">{car.year || "Year"}</p>
                       <p className="text-2xl font-bold text-blue-600">
                         {currency}
-                        {car.pricePerDay || "0"}/day
+                        {car.pricePerDay || "0"}/5km
                       </p>
                       <div className="flex flex-wrap gap-2">
                         <span className="px-3 py-1 bg-white/80 text-gray-700 rounded-full text-sm">

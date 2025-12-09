@@ -16,6 +16,7 @@ import {
   Cpu,
   Bike,
   Wrench,
+  Motorbike,
 } from "lucide-react";
 import { useAppContext } from "../context/AppContext";
 import Loader from "../components/Loader";
@@ -343,8 +344,8 @@ const MyBookings = () => {
                               <span>{booking.motor?.fuel_type}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Bike className="w-4 h-4" />
-                              <span>{booking.rentalDays} days</span>
+                              <Motorbike className="w-4 h-4" />
+                              <span>{booking.totalKm}km</span>
                             </div>
                           </div>
                         </div>
@@ -355,11 +356,6 @@ const MyBookings = () => {
                           {currency}
                           {booking.totalPrice?.toLocaleString()}
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {currency}
-                          {booking.motor?.pricePerDay} × {booking.rentalDays}{" "}
-                          days
-                        </p>
                       </div>
                     </div>
 
@@ -387,7 +383,11 @@ const MyBookings = () => {
                           <p className="text-sm text-gray-500">
                             Drop-off Location
                           </p>
-                          <p className="font-medium">SM Mall</p>
+                          <p className="font-medium">
+                            {booking?.dropOffLocation
+                              ? booking?.dropOffLocation
+                              : "SM Mall"}
+                          </p>
                         </div>
                       </div>
                     </div>
