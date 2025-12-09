@@ -164,37 +164,32 @@ const MotorDetails = () => {
     {
       id: "helmet",
       name: "10km",
-      icon: <HardHat className="w-5 h-5" />,
+      icon: <Navigation className="w-5 h-5" />,
       price: 40,
-      description: "Full-face helmet with Bluetooth",
     },
     {
       id: "insurance",
       name: "12km",
-      icon: <Shield className="w-5 h-5" />,
+      icon: <Navigation className="w-5 h-5" />,
       price: 50,
-      description: "Accident and theft protection",
     },
     {
       id: "gps",
       name: "15km",
       icon: <Navigation className="w-5 h-5" />,
       price: 80,
-      description: "Off-road maps and routes",
     },
     {
       id: "jacket",
       name: "17km",
-      icon: <User className="w-5 h-5" />,
+      icon: <Navigation className="w-5 h-5" />,
       price: 100,
-      description: "Protective riding gear",
     },
     {
       id: "actioncam",
       name: "20km",
-      icon: <Radio className="w-5 h-5" />,
+      icon: <Navigation className="w-5 h-5" />,
       price: 120,
-      description: "Capture your adventure",
     },
   ];
 
@@ -545,26 +540,22 @@ const MotorDetails = () => {
                 <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-xl">
                   <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    Recommended for peak hours - (Fast and Efficient in traffic)
+                    Recommended for peak hours
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• Mountain roads to Mambukal</li>
-                    <li>• Coastal highways along Dumaguete</li>
-                    <li>• City commuting in Bacolod</li>
-                    <li>• Tourist spot exploration</li>
+                    <li>• Fast and Efficient in traffic</li>
                   </ul>
                 </div>
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-xl">
                   <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-600" />
-                    Safety Features - (ABS braking system, Helmet, Hair net,
-                    safety vest)
+                    Safety Features
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• ABS Braking System</li>
-                    <li>• LED Lighting Package</li>
-                    <li>• Emergency Kit Included</li>
-                    <li>• 24/7 Support Available</li>
+                    <li>• ABS braking system</li>
+                    <li>• Helmet</li>
+                    <li>• Hair net</li>
+                    <li>• safety vest</li>
                   </ul>
                 </div>
               </div>
@@ -737,34 +728,6 @@ const MotorDetails = () => {
                     <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
                   </div>
                 </div>
-
-                {/* Additional Location Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                      <Navigation className="w-4 h-4" />
-                      Getting There
-                    </h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• Available for pickup at location</li>
-                      <li>• Clear directions provided upon booking</li>
-                      <li>• Parking available for your vehicle</li>
-                      <li>• 24/7 support for directions</li>
-                    </ul>
-                  </div>
-                  <div className="bg-gray-50 p-4 rounded-xl">
-                    <h4 className="font-medium text-gray-900 mb-2 flex items-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      Safety & Security
-                    </h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>• Secure parking location</li>
-                      <li>• Verified pickup process</li>
-                      <li>• Insurance coverage at location</li>
-                      <li>• Emergency contact available</li>
-                    </ul>
-                  </div>
-                </div>
               </div>
             </motion.div>
           </div>
@@ -785,10 +748,6 @@ const MotorDetails = () => {
                     {" "}
                     / 5km
                   </span>
-                </div>
-                <div className="text-sm text-gray-600 flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-green-500" />
-                  Basic insurance & helmet included
                 </div>
               </div>
 
@@ -880,7 +839,7 @@ const MotorDetails = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
-                    Adventure Gear & Extras
+                    Adventure Ride
                   </label>
                   <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                     {features.map((feature) => (
