@@ -364,31 +364,7 @@ const MyBookings = () => {
                     </div>
 
                     {/* Quick Info Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Calendar className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Pick-up Date</p>
-                          <p className="font-medium">
-                            {new Date(booking.pickupDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <Calendar className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Return Date</p>
-                          <p className="font-medium">
-                            {new Date(booking.returnDate).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
                           <MapPin className="w-5 h-5 text-blue-600" />
@@ -400,6 +376,18 @@ const MyBookings = () => {
                           <p className="font-medium">
                             {booking.pickupLocation}
                           </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <MapPin className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Drop-off Location
+                          </p>
+                          <p className="font-medium">SM Mall</p>
                         </div>
                       </div>
                     </div>
