@@ -24,8 +24,9 @@ import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 
 const MotorCard = ({ motor }) => {
+  const currency = "₱";
   const navigate = useNavigate();
-  const { user, axios, setShowLogin, currency } = useAppContext();
+  const { user, axios, setShowLogin } = useAppContext();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [loading, setLoading] = useState(false);
