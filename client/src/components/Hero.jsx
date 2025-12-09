@@ -23,24 +23,24 @@ const Hero = () => {
   const navigate = useNavigate();
 
   const bikeTypes = [
-    { id: "sport", label: "Sport", icon: "⚡", desc: "High-performance" },
-    { id: "cruiser", label: "Cruiser", icon: "🛣️", desc: "Comfort rides" },
-    { id: "adventure", label: "Adventure", icon: "🏔️", desc: "Off-road ready" },
-    { id: "scooter", label: "Scooter", icon: "🛵", desc: "Urban mobility" },
-    { id: "touring", label: "Touring", icon: "🧭", desc: "Long journeys" },
-    { id: "naked", label: "Naked", icon: "🛡️", desc: "Street style" },
+    { id: "Bikes", label: "Bikes", icon: "🛵", desc: "Urban mobility" },
+    {
+      id: "ride",
+      label: "Ride later",
+      icon: "🎫",
+      desc: "book rides in advance",
+    },
   ];
 
   const stats = [
-    { value: "750+", label: "Bikes Available", color: "text-orange-400" },
+    { value: "250+", label: "Riders", color: "text-orange-400" },
     { value: "24/7", label: "Support", color: "text-green-400" },
-    { value: "85+", label: "Cities", color: "text-blue-400" },
     { value: "9.8/10", label: "Rating", color: "text-yellow-400" },
   ];
 
   const features = [
     { icon: <Shield className="w-5 h-5" />, text: "Full Insurance Included" },
-    { icon: <Zap className="w-5 h-5" />, text: "Free Helmet & Gear" },
+    { icon: <Zap className="w-5 h-5" />, text: "Safety Gears Provided" },
     { icon: <Clock className="w-5 h-5" />, text: "Flexible Cancellation" },
     { icon: <Sparkles className="w-5 h-5" />, text: "Premium Maintenance" },
   ];
@@ -78,13 +78,7 @@ const Hero = () => {
           animate={{ y: 0, opacity: 1 }}
           className="flex justify-between items-center py-6"
         >
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
-              <Motorbike className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-blue-800">Dalagan</span>
-            <span className="text-2xl font-bold text-yellow-300">Express</span>
-          </div>
+          <div className="flex items-center gap-2"></div>
 
           <div className="hidden md:flex items-center gap-6">
             <a
@@ -137,10 +131,10 @@ const Hero = () => {
                   </span>
                 </motion.div>
 
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight">
-                  <span className="block text-white">Ride Your</span>
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight flex items-center gap-3">
+                  <span className="block text-white">Ride In</span>
                   <span className="block bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent">
-                    Dream Bike
+                    Comfort
                   </span>
                 </h1>
 
@@ -169,7 +163,7 @@ const Hero = () => {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                   {stats.map((stat, index) => (
                     <motion.div
                       key={index}
@@ -201,7 +195,7 @@ const Hero = () => {
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-white">
-                        Premium Bike Collection
+                        Transportation
                       </h2>
                       <p className="text-gray-400 text-sm">
                         Explore our curated selection of motorcycles
@@ -212,14 +206,11 @@ const Hero = () => {
                   {/* Bike Type Showcase */}
                   <div className="space-y-6">
                     <div>
-                      <label className="text-gray-300 text-lg font-medium">
-                        Available Categories
-                      </label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                      <div className="grid grid-cols-2 gap-5">
                         {bikeTypes.map((type) => (
                           <div
                             key={type.id}
-                            className="p-4 bg-white/5 border border-white/10 rounded-xl transition-all duration-300 text-center group hover:bg-white/10"
+                            className="p-4 mt-3 bg-white/5 w-full border border-white/10 rounded-xl transition-all duration-300 text-center group hover:bg-white/10"
                           >
                             <div className="text-3xl mb-3">{type.icon}</div>
                             <div className="font-medium text-white">
@@ -244,9 +235,7 @@ const Hero = () => {
                       <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       <div className="relative z-10 flex items-center justify-center gap-3 px-6 py-4 text-white font-bold rounded-xl">
                         <Navigation className="w-5 h-5 group-hover:animate-bounce" />
-                        <span className="text-lg">
-                          Browse All Available Bikes
-                        </span>
+                        <span className="text-lg">Book Now</span>
                       </div>
                     </motion.button>
                   </div>
@@ -256,11 +245,11 @@ const Hero = () => {
                     <div className="flex flex-wrap items-center justify-center gap-4 text-sm">
                       <span className="flex items-center gap-2 text-gray-400">
                         <Zap className="w-4 h-4 text-green-400" />
-                        Instant Confirmation
+                        Fast bookings
                       </span>
                       <span className="flex items-center gap-2 text-gray-400">
                         <Shield className="w-4 h-4 text-blue-400" />
-                        Full Insurance
+                        Safety Priority
                       </span>
                       <span className="flex items-center gap-2 text-gray-400">
                         <Clock className="w-4 h-4 text-purple-400" />
@@ -275,7 +264,7 @@ const Hero = () => {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
-                  className="absolute -bottom-6 -left-6 bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg border border-orange-500/30 rounded-2xl p-4 shadow-2xl"
+                  className="absolute -bottom-6 -left-15 bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-lg border border-orange-500/30 rounded-2xl p-4 shadow-2xl"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-orange-500/30 rounded-lg">
